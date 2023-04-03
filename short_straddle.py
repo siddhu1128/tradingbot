@@ -10,19 +10,26 @@ import requests
 import dateutil
 import json
 import calendar
+from kiteconnect import KiteConnect
+from pyotp import TOTP
+import configparser
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dev', action="store_true", default=False)
 parser.add_argument('--continue', dest='continueTrade', action="store_true", default=False)
-parser.add_argument('-t', '--token', dest='token', type=str, required=True, help="zerodha token")
+parser.add_argument('-t', '--token', dest='token', type=str, help="zerodha token")
 parser.add_argument('--target', dest='target', type=int, help="target in rupees")
-parser.add_argument('-e', '--expiry', dest='expiry_date', required=True, type=str, help="Banknifty expiry date")
+parser.add_argument('-e', '--expiry', dest='expiry_date', type=str, help="Banknifty expiry date")
+parser.add_argument('--config', dest='config', required=True, help="config file full path with filename")
 logfilegroup = parser.add_mutually_exclusive_group(required=True)
-logfilegroup.add_argument('--log', dest='logpath',
-                          help="Log location do not give any file names eg: /Users/siddhu/Documents/TradingPot")
+logfilegroup.add_argument('--log', dest='logpath', help="Log location do not give any file names eg: /Users/siddhu/Documents/TradingPot")
 logfilegroup.add_argument('--icloud', action="store_true",
                           help="Provide log file patch do not include icloud drive path eg: Documents/test.log")
 args = parser.parse_args()
+
+config = configparser.ConfigParser()
+config.read(str(args.config))
+
 
 if args.icloud:
     # Use icloud drive to save logs
@@ -60,35 +67,40 @@ handler.flush()
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 # # Getting Expiry date
-# if not args.expiry_date:
-#     day_name = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-#     current_date = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).date()
-#     current_day = day_name[current_date.weekday()]
-#     if current_date.weekday() == 3:
-#         expiry_date = current_date + datetime.timedelta(days=7)
-#     elif current_date.weekday() == 4:
-#         expiry_date = current_date + datetime.timedelta(days=6)
-#     elif current_date.weekday() == 5:
-#         current_date = current_date + datetime.timedelta(days=2)
-#         current_day = day_name[current_date.weekday()]
-#     elif current_date.weekday() == 6:
-#         current_date = current_date + datetime.timedelta(days=1)
-#         current_day = day_name[current_date.weekday()]
-#     else:
-#         expiry_date = current_date - datetime.timedelta(days=(current_date.weekday() - 3))
-#     expiry_day = day_name[expiry_date.weekday()]
-# else:
-#     expiry_date = args.expiry_date
+if not args.expiry_date:
+    day_name = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    current_date = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).date()
+    current_day = day_name[current_date.weekday()]
+    if current_date.weekday() == 3:
+        expiry_date = current_date + datetime.timedelta(days=7)
+    elif current_date.weekday() == 4:
+        expiry_date = current_date + datetime.timedelta(days=6)
+    elif current_date.weekday() == 5:
+        current_date = current_date + datetime.timedelta(days=2)
+        current_day = day_name[current_date.weekday()]
+    elif current_date.weekday() == 6:
+        current_date = current_date + datetime.timedelta(days=1)
+        current_day = day_name[current_date.weekday()]
+    else:
+        expiry_date = current_date - datetime.timedelta(days=(current_date.weekday() - 3))
+    expiry_day = day_name[expiry_date.weekday()]
+else:
+    expiry_date = args.expiry_date
 
 # Arguments
 ## EXPIRY_DATE  should be in yyyy-mm-dd
-EXPIRY_DATE = args.expiry_date
-STOPLOSS = 20
-TRAILING_STOPLOSS = '40:20'
-EXIT_TIME = '15:10:00'
-SIGNAL = 'BANKNIFTY'
-QUANTITY = 25
-TICK_SIZE = 0.05
+EXPIRY_DATE = expiry_date
+STOPLOSS = int(config.get('default', 'STOPLOSS'))
+TRAILING_STOPLOSS = config.get('default', 'TRAILING_STOPLOSS')
+EXIT_TIME = config.get('default', 'EXIT_TIME')
+SIGNAL = config.get('default', 'SIGNAL')
+QUANTITY = int(config.get('default', 'QUANTITY'))
+TICK_SIZE = float(config.get('default', 'TICK_SIZE'))
+api_key = config.get('default', 'api_key')
+api_secret = config.get('default', 'api_secret')
+USERNAME = config.get('default', 'USERNAME')
+PASSWORD = config.get('default', 'PASSWORD')
+TOTP_Key = config.get('default', 'TOTP_Key')
 
 # Globals
 trading_log = pd.DataFrame()
@@ -225,6 +237,7 @@ class KiteApp:
                                        headers=self.headers).json()["data"]["order_id"]
         return order_id
 
+
 # funtions
 def squareoff(symbol, buy_sell, quantity, EXCHANGE):
     # Place an intraday market order on NSE
@@ -284,12 +297,12 @@ def create_orders(CE_Dict, PE_Dict):
             price=PRICE,
             tag=TAG
         )
-        order_data['CE_Order_Id'] = CE_Order["order_id"]
+        order_data['CE_Order_Id'] = CE_Order
         verify_order = verifyOrder(order_data['CE_Order_Id'])
         try:
             if verify_order['status'] == 'COMPLETE':
                 order_data['CE_AVG_Price'] = verify_order["average_price"]
-                order_data['CE_Entry_Time'] = verify_order["order_timestamp"]
+                order_data['CE_Entry_Time'] = str(verify_order["order_timestamp"])
                 logger.info('{} {} order placed successfully'.format(order_data['CE_Trading_Signal'],
                                                                      kite.TRANSACTION_TYPE_SELL))
             else:
@@ -312,12 +325,12 @@ def create_orders(CE_Dict, PE_Dict):
             order_type=kite.ORDER_TYPE_MARKET,
             tag="TradingPot"
         )
-        order_data['PE_Order_Id'] = PE_Order["order_id"]
+        order_data['PE_Order_Id'] = PE_Order
         verify_order = verifyOrder(order_data['PE_Order_Id'])
         try:
             if verify_order['status'] == 'COMPLETE':
                 order_data['PE_AVG_Price'] = verify_order["average_price"]
-                order_data['PE_Entry_Time'] = verify_order["order_timestamp"]
+                order_data['PE_Entry_Time'] = str(verify_order["order_timestamp"])
                 logger.info('{} {} order placed successfully'.format(order_data['PE_Trading_Signal'],
                                                                      kite.TRANSACTION_TYPE_SELL))
             else:
@@ -344,11 +357,11 @@ def create_orders(CE_Dict, PE_Dict):
             product=kite.PRODUCT_MIS,
             order_type=kite.ORDER_TYPE_SL,
             price=order_data['CE_Stoploss_Price'],
-            trigger_price=int(order_data['CE_Stoploss_Price']) - (int(order_data['CE_Stoploss_Price']) * 0.01),
+            trigger_price=round((int(order_data['CE_Stoploss_Price']) - (int(order_data['CE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE,
             tag="TradingPot"
         )
 
-        order_data['CE_Stoploss_Order_Id'] = CE_Stoploss_Order["order_id"]
+        order_data['CE_Stoploss_Order_Id'] = CE_Stoploss_Order
         verify_order = verifyOrder(order_data['CE_Stoploss_Order_Id'])
         try:
             if verify_order['status'] == 'TRIGGER PENDING':
@@ -374,11 +387,11 @@ def create_orders(CE_Dict, PE_Dict):
             product=kite.PRODUCT_MIS,
             order_type=kite.ORDER_TYPE_SL,
             price=order_data['PE_Stoploss_Price'],
-            trigger_price=int(order_data['PE_Stoploss_Price']) - (int(order_data['PE_Stoploss_Price']) * 0.01),
+            trigger_price=round((int(order_data['PE_Stoploss_Price']) - (int(order_data['PE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE,
             tag="TradingPot"
         )
 
-        order_data['PE_Stoploss_Order_Id'] = PE_Stoploss_Order["order_id"]
+        order_data['PE_Stoploss_Order_Id'] = PE_Stoploss_Order
         verify_order = verifyOrder(order_data['PE_Stoploss_Order_Id'])
         try:
             if verify_order['status'] == 'TRIGGER PENDING':
@@ -409,9 +422,9 @@ def create_orders(CE_Dict, PE_Dict):
             order_data['PE_AVG_Price'] = PE_Dict["{}:{}".format(EXCHANGE, order_data['PE_Trading_Signal'])][
                 'last_price']
         order_data['CE_Stoploss_Price'] = int(order_data['CE_AVG_Price']) + (
-                int(order_data['CE_AVG_Price']) * (STOPLOSS / 100))
+                int(order_data['CE_AVG_Price']) * (int(STOPLOSS) / 100))
         order_data['PE_Stoploss_Price'] = int(order_data['PE_AVG_Price']) + (
-                int(order_data['PE_AVG_Price']) * (STOPLOSS / 100))
+                int(order_data['PE_AVG_Price']) * (int(STOPLOSS) / 100))
         order_data['CE_Order_Id'] = 0
         order_data['PE_Order_Id'] = 0
         order_data['CE_Stoploss_Order_Id'] = 0
@@ -433,9 +446,7 @@ def live_data(order_data):
     trade_data['pe_trailing_count'] = 0
     trade_data['ce_sl_hit_price'] = 0
     trade_data['pe_sl_hit_price'] = 0
-    trade_data['CE_TRAILING_STOPLOSS_PRICE'] = round((int(order_data['CE_AVG_Price']) - (
-            int(order_data['CE_AVG_Price']) * (
-            int(TRAILING_STOPLOSS.split(':')[0]) / 100))) / TICK_SIZE) * TICK_SIZE
+    trade_data['CE_TRAILING_STOPLOSS_PRICE'] = round((int(order_data['CE_AVG_Price']) - (int(order_data['CE_AVG_Price']) * (int(TRAILING_STOPLOSS.split(':')[0]) / 100))) / TICK_SIZE) * TICK_SIZE
     trade_data['PE_TRAILING_STOPLOSS_PRICE'] = round((int(order_data['PE_AVG_Price']) - (
             int(order_data['PE_AVG_Price']) * (
             int(TRAILING_STOPLOSS.split(':')[0]) / 100))) / TICK_SIZE) * TICK_SIZE
@@ -645,7 +656,7 @@ def live_data(order_data):
                                                               # Trying to change with initial order ids instead of stoploss order ids
                                                               price=trade_data['CE_Stoploss_Price'],
                                                               trigger_price=int(trade_data['CE_Stoploss_Price']) - (
-                                                                          int(trade_data['CE_Stoploss_Price']) * 0.01))
+                                                                      int(trade_data['CE_Stoploss_Price']) * 0.01))
                         trade_data['CE_Stoploss_Order_Id'] = CE_Stoploss_Order['order_id']
                         logger.info(
                             'Order_Id:{} Modified stoploss order at price {}'.format(trade_data['CE_Stoploss_Order_Id'],
@@ -725,7 +736,7 @@ def live_data(order_data):
                                                               # Trying to change with initial order ids instead of stoploss order ids
                                                               price=trade_data['PE_Stoploss_Price'],
                                                               trigger_price=int(trade_data['PE_Stoploss_Price']) - (
-                                                                          int(trade_data['PE_Stoploss_Price']) * 0.01))
+                                                                      int(trade_data['PE_Stoploss_Price']) * 0.01))
 
                         logger.info('Stoploss order for {} {} modified/trailed successfully'.format(
                             order_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
@@ -782,8 +793,29 @@ def live_data(order_data):
     return trade_data
 
 
-enctoken = args.token
-kite = KiteApp(enctoken=enctoken)
+## Auto Login Funtion
+session = requests.Session()
+response = session.post("https://kite.zerodha.com/api/login", data={'user_id': USERNAME, 'password': PASSWORD})
+request_id = json.loads(response.text)['data']['request_id']
+twofa_pin = TOTP(TOTP_Key).now()
+response_1 = session.post("https://kite.zerodha.com/api/twofa", data={'user_id': USERNAME, 'request_id': request_id, 'twofa_value': twofa_pin, 'twofa_type': 'totp'})
+kite = KiteConnect(api_key=api_key)
+kite_url = kite.login_url()
+
+try:
+    session.get(kite_url)
+except Exception as e:
+    e_msg = str(e)
+    #print(e_msg)
+    request_token = e_msg.split('request_token=')[1].split(' ')[0].split('&action')[0]
+    print('Successful Login with Request Token:{}'.format(request_token))
+
+access_token = kite.generate_session(request_token, api_secret)['access_token']
+kite.set_access_token(access_token)
+## End of auto login
+
+# enctoken = args.token
+# kite = KiteApp(enctoken=enctoken)
 EXCHANGE = kite.EXCHANGE_NFO
 VARIETY = kite.VARIETY_REGULAR
 ORDER_TYPE = kite.ORDER_TYPE_MARKET
@@ -798,37 +830,55 @@ except TypeError as e:
 ATM = 100 * round(BN_LTP / 100)
 # CE_Trading_Signal = "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "CE"
 # PE_Trading_Signal = "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[2])) + "{}".format(ATM) + "PE"
-CE_Trading_Signal_List = [
-    "BANKNIFTY" + "{}".format(
-        str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + re.sub(r'^0', '',
-                                                                                                         str(EXPIRY_DATE).split(
-                                                                                                             '-')[
-                                                                                                             2])) + "{}".format(
-        ATM) + "CE",
-    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + str(
-        calendar.month_abbr[int(str(EXPIRY_DATE).split('-')[1])]).upper()) + "{}".format(ATM) + "CE",
+CE_Symbol_List = [
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "CE",
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + '{:02d}'.format(int(re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])))) + "{}".format(ATM) + "CE",
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + '{:02d}'.format(int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]))) + '{:02d}'.format(int(re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])))) + "{}".format(ATM) + "CE",
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + '{:02d}'.format(int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]))) + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "CE",
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper() + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "CE",
+    # "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper()) + "{}".format(ATM) + "CE"
 ]
-PE_Trading_Signal_List = [
-    "BANKNIFTY" + "{}".format(
-        str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + re.sub(r'^0', '',
-                                                                                                         str(EXPIRY_DATE).split(
-                                                                                                             '-')[
-                                                                                                             2])) + "{}".format(
-        ATM) + "PE",
-    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + str(
-        calendar.month_abbr[int(str(EXPIRY_DATE).split('-')[1])]).upper()) + "{}".format(ATM) + "PE",
-]
-CE_Trading_Signal = CE_Trading_Signal_List[0]
-CE_Dict = kite.ltp(["{}:{}".format(EXCHANGE, CE_Trading_Signal_List[0])])
-if not bool(CE_Dict):
-    CE_Trading_Signal = CE_Trading_Signal_List[1]
-    CE_Dict = kite.ltp(["{}:{}".format(EXCHANGE, CE_Trading_Signal)])
+instrument_list = kite.instruments()
+ce = 0
+while ce < len(CE_Symbol_List):
+    for instrument in instrument_list:
+        if instrument['exchange'] == 'NFO' and instrument['tradingsymbol'] == CE_Symbol_List[ce]:
+            CE_Trading_Signal = CE_Symbol_List[ce]
+            break
+    ce += 1
 
-PE_Trading_Signal = PE_Trading_Signal_List[0]
-PE_Dict = kite.ltp(["{}:{}".format(EXCHANGE, PE_Trading_Signal_List[0])])
-if not bool(PE_Dict):
-    PE_Trading_Signal = PE_Trading_Signal_List[1]
+PE_Symbol_List = [
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "PE",
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + '{:02d}'.format(int(re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])))) + "{}".format(ATM) + "PE",
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + '{:02d}'.format(int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]))) + '{:02d}'.format(int(re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])))) + "{}".format(ATM) + "PE",
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + '{:02d}'.format(int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]))) + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "PE",
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper() + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "PE",
+    # "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper()) + "{}".format(ATM) + "PE"
+]
+pe = 0
+while pe < len(PE_Symbol_List):
+    for instrument in instrument_list:
+        if instrument['exchange'] == 'NFO' and instrument['tradingsymbol'] == PE_Symbol_List[pe]:
+            PE_Trading_Signal = PE_Symbol_List[pe]
+            break
+    pe += 1
+
+if not CE_Trading_Signal or not PE_Trading_Signal:
+    if EXPIRY_DATE == datetime.date(EXPIRY_DATE.year, EXPIRY_DATE.month, (calendar.monthrange(EXPIRY_DATE.year, EXPIRY_DATE.month)[1]) - 6):
+        for instrument in instrument_list:
+            ce_symbol = "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper()) + "{}".format(ATM) + "CE"
+            pe_symbol = "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper()) + "{}".format(ATM) + "PE"
+            if instrument['exchange'] == 'NFO' and instrument['tradingsymbol'] == ce_symbol:
+                CE_Trading_Signal = ce_symbol
+            if instrument['exchange'] == 'NFO' and instrument['tradingsymbol'] == pe_symbol:
+                PE_Trading_Signal = pe_symbol
+
+try:
+    CE_Dict = kite.ltp(["{}:{}".format(EXCHANGE, CE_Trading_Signal)])
     PE_Dict = kite.ltp(["{}:{}".format(EXCHANGE, PE_Trading_Signal)])
+except Exception as e:
+    logger.error("Unable to fetch BANKNIFTY Options Symbols... CE: {}, PE: {}".format(CE_Trading_Signal, PE_Trading_Signal))
+    exit(1)
 
 Exit_Time = datetime.datetime.strptime('{} {}'.format(str(datetime.date.today()), EXIT_TIME), '%Y-%m-%d %H:%M:%S')
 Current_datetime = datetime.datetime.now()
@@ -853,7 +903,6 @@ else:
         order_data = json.load(f)
 
 trade_data = live_data(order_data)
-
 
 record = [
     # Date

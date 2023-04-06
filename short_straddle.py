@@ -213,6 +213,7 @@ class KiteApp:
 
         # Send the request and handle errors
         response = self.session.post(f"{self.root_url}/orders/{variety}", data=params, headers=self.headers).json()
+        print(response)
         if response.get('status') == 'error':
             logger.error(f"Unable to place {tradingsymbol} {transaction_type} order, Reason: {response['message']}")
         return response["data"]
@@ -227,6 +228,7 @@ class KiteApp:
 
         response = self.session.put(f"{self.root_url}/orders/{variety}/{order_id}", data=params,
                                     headers=self.headers).json()
+        print(response)
         if response.get('status') == 'error':
             logger.error(f"Unable to modify order, Reason: {response['message']}")
         return response["data"]
@@ -607,37 +609,27 @@ def live_data(order_data):
                 break
 
         # CE
-        if args.dev:
-            if (trade_data['CE_Spot_Price'] >= trade_data['CE_Stoploss_Price']) & (
-                    trade_data.get('ce_exit_price') is None):
-                if not args.dev:
-                    CE_Cancel_Order = kite.cancel_order(variety=VARIETY, order_id=trade_data['CE_Stoploss_Order_Id'])
-                    CE_Squareoff_Order = kite.place_order(
-                        variety=VARIETY,
-                        exchange=EXCHANGE,
-                        tradingsymbol=trade_data['CE_Trading_Signal'],
-                        transaction_type=kite.TRANSACTION_TYPE_BUY,
-                        quantity=QUANTITY,
-                        product=kite.PRODUCT_MIS,
-                        order_type=kite.ORDER_TYPE_MARKET,
-                        tag="TradingPot"
-                    )
-                    CE_verify_order = verifyOrder(order_data['CE_Squareoff_Order'])
-                    try:
-                        if CE_verify_order['status'] == 'COMPLETED':
-                            trade_data['ce_exit_price'] = CE_verify_order["average_price"]
-                            trade_data['ce_exit_time'] = str(CE_verify_order["order_timestamp"]).split(' ')[1]
-                            logger.info('{} Squared off successfully..!!!'.format(trade_data['CE_Trading_Signal']))
-                        else:
-                            logger.error('[Important] Unable to Square off orders please verify manually...!!!')
-                            continue
-                    except KeyError as e:
-                        logger.error("Unable to place square-off orders")
-
+        if (trade_data['CE_Spot_Price'] >= trade_data['CE_Stoploss_Price']) & (
+                trade_data.get('ce_exit_price') is None):
+            if not args.dev:
+                CE_verify_order = verifyOrder(trade_data['CE_Stoploss_Order_Id'])
+                try:
+                    if CE_verify_order['status'] == 'COMPLETED':
+                        trade_data['ce_exit_price'] = CE_verify_order["average_price"]
+                        trade_data['ce_exit_time'] = str(CE_verify_order["order_timestamp"]).split(' ')[1]
+                        logger.info('{} Squared off successfully..!!!'.format(trade_data['CE_Trading_Signal']))
+                    else:
+                        logger.error('[Important] Unable to Square off orders please verify manually...!!!')
+                        continue
+                except KeyError as e:
+                    logger.error("Unable to place square-off orders")
+            else:
                 trade_data['ce_exit_price'] = trade_data['ce_sl_hit_price'] = trade_data['CE_Spot_Price']
-                logger.info(
-                    '{} Stoploss Hit at {}'.format(order_data['CE_Trading_Signal'], trade_data['ce_exit_price']))
                 trade_data['ce_exit_time'] = str(Current_Time).split(' ')[1]
+            logger.info(
+                '{} Stoploss Hit at {}'.format(order_data['CE_Trading_Signal'], trade_data['ce_exit_price']))
+            
+
         # Trailing stoploss
         if (trade_data['CE_Spot_Price'] <= trade_data['CE_TRAILING_STOPLOSS_PRICE']) & (
                 trade_data.get('ce_exit_price') is None):  # TESTBLOCK Change this to <= modified for testing
@@ -655,9 +647,8 @@ def live_data(order_data):
                                                               order_id=verify_order['order_id'],
                                                               # Trying to change with initial order ids instead of stoploss order ids
                                                               price=trade_data['CE_Stoploss_Price'],
-                                                              trigger_price=int(trade_data['CE_Stoploss_Price']) - (
-                                                                      int(trade_data['CE_Stoploss_Price']) * 0.01))
-                        trade_data['CE_Stoploss_Order_Id'] = CE_Stoploss_Order['order_id']
+                                                              trigger_price=round((int(order_data['CE_Stoploss_Price']) - (int(order_data['CE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE)
+                        trade_data['CE_Stoploss_Order_Id'] = CE_Stoploss_Order
                         logger.info(
                             'Order_Id:{} Modified stoploss order at price {}'.format(trade_data['CE_Stoploss_Order_Id'],
                                                                                      trade_data['CE_Stoploss_Price']))
@@ -687,40 +678,29 @@ def live_data(order_data):
                                                                                               1])
 
         # PE
-        if args.dev:
-            if (trade_data['PE_Spot_Price'] >= trade_data['PE_Stoploss_Price']) & (
-                    trade_data.get('pe_exit_price') is None):
-                if not args.dev:
-                    PE_Cancel_Order = kite.cancel_order(variety=VARIETY, order_id=trade_data['PE_Stoploss_Order_Id'])
-                    PE_Squareoff_Order = kite.place_order(
-                        variety=VARIETY,
-                        exchange=EXCHANGE,
-                        tradingsymbol=trade_data['PE_Trading_Signal'],
-                        transaction_type=kite.TRANSACTION_TYPE_BUY,
-                        quantity=QUANTITY,
-                        product=kite.PRODUCT_MIS,
-                        order_type=kite.ORDER_TYPE_MARKET,
-                        tag="TradingPot"
-                    )
-                    PE_verify_order = verifyOrder(order_data['PE_Squareoff_Order'])
-                    try:
-                        if PE_verify_order['status'] == 'COMPLETED':
-                            trade_data['pe_exit_price'] = PE_verify_order["average_price"]
-                            trade_data['pe_exit_time'] = str(PE_verify_order["order_timestamp"]).split(' ')[1]
-                            logger.info('{} Squared off successfully..!!!'.format(trade_data['PE_Trading_Signal']))
-                        else:
-                            logger.error('[Important] Unable to Square off orders please verify manually...!!!')
-                            continue
-                    except KeyError as e:
-                        logger.error("Unable to place square-off orders")
+        if (trade_data['PE_Spot_Price'] >= trade_data['PE_Stoploss_Price']) & (
+                trade_data.get('pe_exit_price') is None):
+            if not args.dev:
+                PE_verify_order = verifyOrder(trade_data['PE_Stoploss_Order_Id'])
+                try:
+                    if PE_verify_order['status'] == 'COMPLETED':
+                        trade_data['pe_exit_price'] = PE_verify_order["average_price"]
+                        trade_data['pe_exit_time'] = str(PE_verify_order["order_timestamp"]).split(' ')[1]
+                        logger.info('{} Squared off successfully..!!!'.format(trade_data['CE_Trading_Signal']))
+                    else:
+                        logger.error('[Important] Unable to Square off orders please verify manually...!!!')
+                        continue
+                except KeyError as e:
+                    logger.error("Unable to place square-off orders")
+            else:
                 trade_data['pe_exit_price'] = trade_data['pe_sl_hit_price'] = trade_data['PE_Spot_Price']
-                logger.info(
-                    '{} Stoploss Hit at {}'.format(order_data['PE_Trading_Signal'], trade_data['pe_exit_price']))
-                # Hit Stoploss and Square-off
-                pe_exit_time = str(Current_Time).split(' ')[1]
+                trade_data['pe_exit_time'] = str(Current_Time).split(' ')[1]
+            logger.info(
+                '{} Stoploss Hit at {}'.format(order_data['PE_Trading_Signal'], trade_data['pe_exit_price']))
+            
+
         # Trailing stoploss
-        if (trade_data['PE_Spot_Price'] <= trade_data['PE_TRAILING_STOPLOSS_PRICE']) & (
-                trade_data.get('pe_exit_price') is None):  # TESTBLOCK Change this to <= modified for testing
+        if (trade_data['PE_Spot_Price'] <= trade_data['PE_TRAILING_STOPLOSS_PRICE']) & (trade_data.get('pe_exit_price') is None):  # TESTBLOCK Change this to <= modified for testing
             trade_data['PE_Stoploss_Price'] = round((round((int(trade_data['PE_Spot_Price']) + (
                     int(trade_data['PE_Spot_Price']) * (
                     int(TRAILING_STOPLOSS.split(':')[1]) / 100))) / TICK_SIZE) * TICK_SIZE), 2)
@@ -735,12 +715,11 @@ def live_data(order_data):
                                                               order_id=verify_order['order_id'],
                                                               # Trying to change with initial order ids instead of stoploss order ids
                                                               price=trade_data['PE_Stoploss_Price'],
-                                                              trigger_price=int(trade_data['PE_Stoploss_Price']) - (
-                                                                      int(trade_data['PE_Stoploss_Price']) * 0.01))
+                                                              trigger_price=round((int(order_data['PE_Stoploss_Price']) - (int(order_data['PE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE,)
 
                         logger.info('Stoploss order for {} {} modified/trailed successfully'.format(
                             order_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
-                        trade_data['PE_Stoploss_Order_Id'] = PE_Stoploss_Order['order_id']
+                        trade_data['PE_Stoploss_Order_Id'] = PE_Stoploss_Order
                         logger.info(
                             'Order_Id:{} Modified stoploss order at price {}'.format(trade_data['PE_Stoploss_Order_Id'],
                                                                                      trade_data['PE_Stoploss_Price']))

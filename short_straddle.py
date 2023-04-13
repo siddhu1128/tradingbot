@@ -22,14 +22,14 @@ parser.add_argument('--target', dest='target', type=int, help="target in rupees"
 parser.add_argument('-e', '--expiry', dest='expiry_date', type=str, help="Banknifty expiry date")
 parser.add_argument('--config', dest='config', required=True, help="config file full path with filename")
 logfilegroup = parser.add_mutually_exclusive_group(required=True)
-logfilegroup.add_argument('--log', dest='logpath', help="Log location do not give any file names eg: /Users/siddhu/Documents/TradingPot")
+logfilegroup.add_argument('--log', dest='logpath',
+                          help="Log location do not give any file names eg: /Users/siddhu/Documents/TradingPot")
 logfilegroup.add_argument('--icloud', action="store_true",
                           help="Provide log file patch do not include icloud drive path eg: Documents/test.log")
 args = parser.parse_args()
 
 config = configparser.ConfigParser()
 config.read(str(args.config))
-
 
 if args.icloud:
     # Use icloud drive to save logs
@@ -359,7 +359,8 @@ def create_orders(CE_Dict, PE_Dict):
             product=kite.PRODUCT_MIS,
             order_type=kite.ORDER_TYPE_SL,
             price=order_data['CE_Stoploss_Price'],
-            trigger_price=round((int(order_data['CE_Stoploss_Price']) - (int(order_data['CE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE,
+            trigger_price=round((int(order_data['CE_Stoploss_Price']) - (
+                    int(order_data['CE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE,
             tag="TradingPot"
         )
 
@@ -389,7 +390,8 @@ def create_orders(CE_Dict, PE_Dict):
             product=kite.PRODUCT_MIS,
             order_type=kite.ORDER_TYPE_SL,
             price=order_data['PE_Stoploss_Price'],
-            trigger_price=round((int(order_data['PE_Stoploss_Price']) - (int(order_data['PE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE,
+            trigger_price=round((int(order_data['PE_Stoploss_Price']) - (
+                    int(order_data['PE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE,
             tag="TradingPot"
         )
 
@@ -435,7 +437,10 @@ def create_orders(CE_Dict, PE_Dict):
         logger.info('SELLING {} at {} Price'.format(order_data['CE_Trading_Signal'], order_data['CE_AVG_Price']))
         order_data['PE_Entry_Time'] = str(Current_Time).split(' ')[1]
         logger.info('SELLING {} at {} Price'.format(order_data['PE_Trading_Signal'], order_data['PE_AVG_Price']))
+        with open(swp_file, "w") as outfile:
+            json.dump(order_data, outfile)
     return order_data
+
 
 def live_data(order_data):
     trade_data = order_data
@@ -447,11 +452,17 @@ def live_data(order_data):
     trade_data['pe_trailing_count'] = 0
     trade_data['ce_sl_hit_price'] = 0
     trade_data['pe_sl_hit_price'] = 0
+    trade_data['max_profit'] = 0
     if trade_data.get('CE_TRAILING_STOPLOSS_PRICE') is None:
-        trade_data['CE_TRAILING_STOPLOSS_PRICE'] = round((int(order_data['CE_AVG_Price']) - (int(order_data['CE_AVG_Price']) * (int(TRAILING_STOPLOSS.split(':')[0]) / 100))) / TICK_SIZE) * TICK_SIZE
+        trade_data['CE_TRAILING_STOPLOSS_PRICE'] = round((int(order_data['CE_AVG_Price']) - (
+                int(order_data['CE_AVG_Price']) * (
+                int(TRAILING_STOPLOSS.split(':')[0]) / 100))) / TICK_SIZE) * TICK_SIZE
     if trade_data.get('PE_TRAILING_STOPLOSS_PRICE') is None:
-        trade_data['PE_TRAILING_STOPLOSS_PRICE'] = round((int(order_data['PE_AVG_Price']) - (int(order_data['PE_AVG_Price']) * (int(TRAILING_STOPLOSS.split(':')[0]) / 100))) / TICK_SIZE) * TICK_SIZE
-    Market_Close_datetime = datetime.datetime.strptime('{} {}'.format(str(datetime.date.today()), '15:15:00'), '%Y-%m-%d %H:%M:%S')
+        trade_data['PE_TRAILING_STOPLOSS_PRICE'] = round((int(order_data['PE_AVG_Price']) - (
+                int(order_data['PE_AVG_Price']) * (
+                int(TRAILING_STOPLOSS.split(':')[0]) / 100))) / TICK_SIZE) * TICK_SIZE
+    Market_Close_datetime = datetime.datetime.strptime('{} {}'.format(str(datetime.date.today()), '15:15:00'),
+                                                       '%Y-%m-%d %H:%M:%S')
 
     # Verify Orders
     if not args.dev:
@@ -459,7 +470,8 @@ def live_data(order_data):
         ce_sl_order = verifyOrder(trade_data['CE_Stoploss_Order_Id'])
         try:
             if ce_sl_order['status'] == 'COMPLETE':
-                logger.info('{} Stoploss Triggered at {} price'.format(trade_data['CE_Trading_Signal'], ce_sl_order["average_price"]))
+                logger.info('{} Stoploss Triggered at {} price'.format(trade_data['CE_Trading_Signal'],
+                                                                       ce_sl_order["average_price"]))
                 trade_data['ce_exit_price'] = ce_sl_order["average_price"]
                 trade_data['ce_exit_time'] = str(ce_sl_order["exchange_timestamp"])
             else:
@@ -472,7 +484,8 @@ def live_data(order_data):
         pe_sl_order = verifyOrder(trade_data['PE_Stoploss_Order_Id'])
         try:
             if pe_sl_order['status'] == 'COMPLETE':
-                logger.info('{} Stoploss Triggered at {} price'.format(trade_data['PE_Trading_Signal'], pe_sl_order["average_price"]))
+                logger.info('{} Stoploss Triggered at {} price'.format(trade_data['PE_Trading_Signal'],
+                                                                       pe_sl_order["average_price"]))
                 trade_data['pe_exit_price'] = pe_sl_order["average_price"]
                 trade_data['pe_exit_time'] = str(pe_sl_order["exchange_timestamp"])
             else:
@@ -482,7 +495,8 @@ def live_data(order_data):
             logger.error('{} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
 
     # Square off all trades at market end time
-    while datetime.datetime.strptime(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S') <= Market_Close_datetime:
+    while datetime.datetime.strptime(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                     '%Y-%m-%d %H:%M:%S') <= Market_Close_datetime:
         try:
             CE_Spot_Dict = kite.ltp(["{}:{}".format(EXCHANGE, trade_data['CE_Trading_Signal'])])
             PE_Spot_Dict = kite.ltp(["{}:{}".format(EXCHANGE, trade_data['PE_Trading_Signal'])])
@@ -635,7 +649,6 @@ def live_data(order_data):
                         trade_data['pe_exit_time'] = str(Current_Time).split(' ')[1]
                 break
 
-
         # Trailing stoploss
         if (trade_data['CE_Spot_Price'] <= trade_data['CE_TRAILING_STOPLOSS_PRICE']) & (
                 trade_data.get('ce_exit_price') is None):  # TESTBLOCK Change this to <= modified for testing
@@ -651,7 +664,9 @@ def live_data(order_data):
                         CE_Stoploss_Order = kite.modify_order(variety=VARIETY,
                                                               order_id=trade_data['CE_Stoploss_Order_Id'],
                                                               price=trade_data['CE_Stoploss_Price'],
-                                                              trigger_price=round((int(trade_data['CE_Stoploss_Price']) - (int(trade_data['CE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE)
+                                                              trigger_price=round((int(
+                                                                  trade_data['CE_Stoploss_Price']) - (int(trade_data[
+                                                                                                              'CE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE)
                         logger.info(
                             'Order_Id:{} Modified stoploss order at price {}'.format(trade_data['CE_Stoploss_Order_Id'],
                                                                                      trade_data['CE_Stoploss_Price']))
@@ -667,7 +682,9 @@ def live_data(order_data):
                         '{} {} order not available'.format(trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
 
             # if trailing stoploss hits modify trailing stoploss price to current price
-            trade_data['CE_TRAILING_STOPLOSS_PRICE'] = round((int(trade_data['CE_Spot_Price']) - (int(trade_data['CE_Spot_Price']) * (int(TRAILING_STOPLOSS.split(':')[0]) / 100))) / TICK_SIZE) * TICK_SIZE
+            trade_data['CE_TRAILING_STOPLOSS_PRICE'] = round((int(trade_data['CE_Spot_Price']) - (
+                    int(trade_data['CE_Spot_Price']) * (
+                    int(TRAILING_STOPLOSS.split(':')[0]) / 100))) / TICK_SIZE) * TICK_SIZE
             logger.info('{} Next Traling stoploss price {}'.format(trade_data['CE_Trading_Signal'],
                                                                    trade_data['CE_TRAILING_STOPLOSS_PRICE']))
             ce_trailing_count += 1
@@ -679,7 +696,8 @@ def live_data(order_data):
                                                                                               1])
 
         # Trailing stoploss
-        if (trade_data['PE_Spot_Price'] <= trade_data['PE_TRAILING_STOPLOSS_PRICE']) & (trade_data.get('pe_exit_price') is None):  # TESTBLOCK Change this to <= modified for testing
+        if (trade_data['PE_Spot_Price'] <= trade_data['PE_TRAILING_STOPLOSS_PRICE']) & (
+                trade_data.get('pe_exit_price') is None):  # TESTBLOCK Change this to <= modified for testing
             trade_data['PE_Stoploss_Price'] = round((round((int(trade_data['PE_Spot_Price']) + (
                     int(trade_data['PE_Spot_Price']) * (
                     int(TRAILING_STOPLOSS.split(':')[1]) / 100))) / TICK_SIZE) * TICK_SIZE), 2)
@@ -693,19 +711,27 @@ def live_data(order_data):
                                                               order_id=trade_data['PE_Stoploss_Order_Id'],
                                                               # Trying to change with initial order ids instead of stoploss order ids
                                                               price=trade_data['PE_Stoploss_Price'],
-                                                              trigger_price=round((int(trade_data['PE_Stoploss_Price']) - (int(trade_data['PE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE,)
+                                                              trigger_price=round((int(
+                                                                  trade_data['PE_Stoploss_Price']) - (int(trade_data[
+                                                                                                              'PE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE, )
 
-                        logger.info('Stoploss order for {} {} modified/trailed successfully'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
-                        logger.info('Order_Id:{} Modified stoploss order at price {}'.format(trade_data['PE_Stoploss_Order_Id'], trade_data['PE_Stoploss_Price']))
+                        logger.info('Stoploss order for {} {} modified/trailed successfully'.format(
+                            trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
+                        logger.info(
+                            'Order_Id:{} Modified stoploss order at price {}'.format(trade_data['PE_Stoploss_Order_Id'],
+                                                                                     trade_data['PE_Stoploss_Price']))
                     else:
                         logger.error('Unable to modify {} {} order Reason: {}'.format(trade_data['PE_Trading_Signal'],
                                                                                       kite.TRANSACTION_TYPE_BUY,
                                                                                       pe_sl_order['status_message']))
                         continue
                 except KeyError as e:
-                    logger.error('{} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
+                    logger.error(
+                        '{} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
             # if trailing stoploss hits modify trailing stoploss price to current price
-            trade_data['PE_TRAILING_STOPLOSS_PRICE'] = round((int(trade_data['PE_Spot_Price']) - (int(trade_data['PE_Spot_Price']) * (int(TRAILING_STOPLOSS.split(':')[0]) / 100))) / TICK_SIZE) * TICK_SIZE
+            trade_data['PE_TRAILING_STOPLOSS_PRICE'] = round((int(trade_data['PE_Spot_Price']) - (
+                    int(trade_data['PE_Spot_Price']) * (
+                    int(TRAILING_STOPLOSS.split(':')[0]) / 100))) / TICK_SIZE) * TICK_SIZE
             logger.info('{} Next Traling stoploss price {}'.format(trade_data['PE_Trading_Signal'],
                                                                    trade_data['PE_TRAILING_STOPLOSS_PRICE']))
             ce_trailing_count += 1
@@ -724,19 +750,21 @@ def live_data(order_data):
             ((trade_data['PE_AVG_Price'] - trade_data['PE_Spot_Price']) * QUANTITY) if trade_data.get(
                 'pe_exit_price') is None else ((trade_data['PE_AVG_Price'] - trade_data['pe_exit_price']) * QUANTITY),
             2)
+        if trade_data['max_profit'] < round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2):
+            trade_data['max_profit'] = round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2)
         logger.info("{} ENTRY_TIME: {}, AVG_PRICE: {}, SL: {}, TSL: {}, LTP: {}, Exit_Price: {}, PnL: {}".format(
             trade_data['CE_Trading_Signal'], trade_data['CE_Entry_Time'], round(trade_data['CE_AVG_Price'], 2),
             round(trade_data['CE_Stoploss_Price'], 2), round(trade_data['CE_TRAILING_STOPLOSS_PRICE'], 2),
             round(trade_data['CE_Spot_Price'], 2),
-            round(trade_data['ce_exit_price'], 2),
+            trade_data['ce_exit_price'],
             round(trade_data['CE_PnL'], 2)))
         logger.info("{} ENTRY_TIME: {}, AVG_PRICE: {}, SL: {}, TSL: {}, LTP: {}, Exit_Price: {}, PnL: {}".format(
             trade_data['PE_Trading_Signal'], trade_data['PE_Entry_Time'], round(trade_data['PE_AVG_Price'], 2),
             round(trade_data['PE_Stoploss_Price'], 2), round(trade_data['PE_TRAILING_STOPLOSS_PRICE'], 2),
             round(trade_data['PE_Spot_Price'], 2),
-            round(trade_data['pe_exit_price'], 2),
+            trade_data['pe_exit_price'],
             round(trade_data['PE_PnL'], 2)))
-        logger.info('Total PnL: {}'.format(round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2)))
+        logger.info('Total PnL: {}, Max_profit: {}'.format(round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2)), trade_data['max_profit'])
         with open(swp_file, "w") as outfile:
             json.dump(trade_data, outfile)
         time.sleep(5)
@@ -748,7 +776,9 @@ session = requests.Session()
 response = session.post("https://kite.zerodha.com/api/login", data={'user_id': USERNAME, 'password': PASSWORD})
 request_id = json.loads(response.text)['data']['request_id']
 twofa_pin = TOTP(TOTP_Key).now()
-response_1 = session.post("https://kite.zerodha.com/api/twofa", data={'user_id': USERNAME, 'request_id': request_id, 'twofa_value': twofa_pin, 'twofa_type': 'totp'})
+response_1 = session.post("https://kite.zerodha.com/api/twofa",
+                          data={'user_id': USERNAME, 'request_id': request_id, 'twofa_value': twofa_pin,
+                                'twofa_type': 'totp'})
 kite = KiteConnect(api_key=api_key)
 kite_url = kite.login_url()
 
@@ -756,7 +786,7 @@ try:
     session.get(kite_url)
 except Exception as e:
     e_msg = str(e)
-    #print(e_msg)
+    # print(e_msg)
     request_token = e_msg.split('request_token=')[1].split(' ')[0].split('&action')[0]
     print('Successful Login with Request Token:{}'.format(request_token))
 
@@ -778,15 +808,28 @@ except TypeError as e:
     logger.error('Enctoken expired please update enctoken and try again...!!!')
     exit(1)
 ATM = 100 * round(BN_LTP / 100)
-# CE_Trading_Signal = "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "CE"
-# PE_Trading_Signal = "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[2])) + "{}".format(ATM) + "PE"
 CE_Symbol_List = [
-    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "CE",
-    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + '{:02d}'.format(int(re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])))) + "{}".format(ATM) + "CE",
-    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + '{:02d}'.format(int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]))) + '{:02d}'.format(int(re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])))) + "{}".format(ATM) + "CE",
-    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + '{:02d}'.format(int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]))) + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "CE",
-    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper() + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "CE",
-    # "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper()) + "{}".format(ATM) + "CE"
+    "BANKNIFTY" + "{}".format(
+        str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + re.sub(r'^0', '',
+                                                                                                         str(EXPIRY_DATE).split(
+                                                                                                             '-')[
+                                                                                                             2])) + "{}".format(
+        ATM) + "CE",
+    "BANKNIFTY" + "{}".format(
+        str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + '{:02d}'.format(
+            int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[2])))) + "{}".format(ATM) + "CE",
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + '{:02d}'.format(
+        int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]))) + '{:02d}'.format(
+        int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[2])))) + "{}".format(ATM) + "CE",
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + '{:02d}'.format(
+        int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]))) + re.sub(r'^0', '',
+                                                                         str(EXPIRY_DATE).split('-')[2])) + "{}".format(
+        ATM) + "CE",
+    "BANKNIFTY" + "{}".format(
+        str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper() + re.sub(r'^0', '',
+                                                                                          str(EXPIRY_DATE).split('-')[
+                                                                                              2])) + "{}".format(
+        ATM) + "CE",
 ]
 instrument_list = kite.instruments()
 ce = 0
@@ -798,12 +841,27 @@ while ce < len(CE_Symbol_List):
     ce += 1
 
 PE_Symbol_List = [
-    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "PE",
-    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + '{:02d}'.format(int(re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])))) + "{}".format(ATM) + "PE",
-    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + '{:02d}'.format(int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]))) + '{:02d}'.format(int(re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])))) + "{}".format(ATM) + "PE",
-    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + '{:02d}'.format(int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]))) + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "PE",
-    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper() + re.sub(r'^0', '',str(EXPIRY_DATE).split('-')[ 2])) + "{}".format(ATM) + "PE",
-    # "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper()) + "{}".format(ATM) + "PE"
+    "BANKNIFTY" + "{}".format(
+        str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + re.sub(r'^0', '',
+                                                                                                         str(EXPIRY_DATE).split(
+                                                                                                             '-')[
+                                                                                                             2])) + "{}".format(
+        ATM) + "PE",
+    "BANKNIFTY" + "{}".format(
+        str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + '{:02d}'.format(
+            int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[2])))) + "{}".format(ATM) + "PE",
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + '{:02d}'.format(
+        int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]))) + '{:02d}'.format(
+        int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[2])))) + "{}".format(ATM) + "PE",
+    "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + '{:02d}'.format(
+        int(re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]))) + re.sub(r'^0', '',
+                                                                         str(EXPIRY_DATE).split('-')[2])) + "{}".format(
+        ATM) + "PE",
+    "BANKNIFTY" + "{}".format(
+        str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper() + re.sub(r'^0', '',
+                                                                                          str(EXPIRY_DATE).split('-')[
+                                                                                              2])) + "{}".format(
+        ATM) + "PE",
 ]
 pe = 0
 while pe < len(PE_Symbol_List):
@@ -814,10 +872,13 @@ while pe < len(PE_Symbol_List):
     pe += 1
 
 if not CE_Trading_Signal or not PE_Trading_Signal:
-    if EXPIRY_DATE == datetime.date(EXPIRY_DATE.year, EXPIRY_DATE.month, (calendar.monthrange(EXPIRY_DATE.year, EXPIRY_DATE.month)[1]) - 6):
+    if EXPIRY_DATE == datetime.date(EXPIRY_DATE.year, EXPIRY_DATE.month,
+                                    (calendar.monthrange(EXPIRY_DATE.year, EXPIRY_DATE.month)[1]) - 6):
         for instrument in instrument_list:
-            ce_symbol = "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper()) + "{}".format(ATM) + "CE"
-            pe_symbol = "BANKNIFTY" + "{}".format(str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper()) + "{}".format(ATM) + "PE"
+            ce_symbol = "BANKNIFTY" + "{}".format(
+                str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper()) + "{}".format(ATM) + "CE"
+            pe_symbol = "BANKNIFTY" + "{}".format(
+                str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper()) + "{}".format(ATM) + "PE"
             if instrument['exchange'] == 'NFO' and instrument['tradingsymbol'] == ce_symbol:
                 CE_Trading_Signal = ce_symbol
             if instrument['exchange'] == 'NFO' and instrument['tradingsymbol'] == pe_symbol:
@@ -827,7 +888,8 @@ try:
     CE_Dict = kite.ltp(["{}:{}".format(EXCHANGE, CE_Trading_Signal)])
     PE_Dict = kite.ltp(["{}:{}".format(EXCHANGE, PE_Trading_Signal)])
 except Exception as e:
-    logger.error("Unable to fetch BANKNIFTY Options Symbols... CE: {}, PE: {}".format(CE_Trading_Signal, PE_Trading_Signal))
+    logger.error(
+        "Unable to fetch BANKNIFTY Options Symbols... CE: {}, PE: {}".format(CE_Trading_Signal, PE_Trading_Signal))
     exit(1)
 
 Exit_Time = datetime.datetime.strptime('{} {}'.format(str(datetime.date.today()), EXIT_TIME), '%Y-%m-%d %H:%M:%S')
@@ -841,7 +903,7 @@ intraday_log = pd.DataFrame(
              'CE_TSL_Hits', 'CE_Exit_Price', 'CE_Exit_Time', 'CE_pnl',
              'PE_Entry_Time', 'PE_Entry_Price', 'PE_Quantity', 'PE_Order_Id', 'PE_Stoploss_Order_Id', 'PE_SL_Hit',
              'PE_TSL_Hits', 'PE_Exit_Price', 'PE_Exit_Time', 'PE_pnl',
-             'Total_pnl', 'Win/Loss'
+             'Total_pnl', 'Win/Loss', 'max_profit'
              # 'CE_max_profit', 'CE_max_loss', 'PE_max_profit', 'PE_max_loss'
              ])
 
@@ -919,6 +981,8 @@ record = [
     ('win' if sum([(order_data['CE_AVG_Price'] - trade_data['ce_exit_price']) * QUANTITY, (
             order_data['PE_AVG_Price'] - trade_data[
         'pe_exit_price']) * QUANTITY]) > 0 else 'loss') if trade_data.get('ce_exit_price') is not None else None,
+    # max_profit
+    trade_data['max_profit']
     # 'CE_max_profit'
     # (CE_AVG_Price - CE_Min_Price) * QUANTITY,
     # # 'CE_max_loss'

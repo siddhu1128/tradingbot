@@ -764,7 +764,7 @@ def live_data(order_data):
             round(trade_data['PE_Spot_Price'], 2),
             trade_data['pe_exit_price'],
             round(trade_data['PE_PnL'], 2)))
-        logger.info('Total PnL: {}, Max_profit: {}'.format(round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2)), trade_data['max_profit'])
+        logger.info('Total PnL: {}, Max_profit: {}'.format(round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2), trade_data['max_profit']))
         with open(swp_file, "w") as outfile:
             json.dump(trade_data, outfile)
         time.sleep(5)

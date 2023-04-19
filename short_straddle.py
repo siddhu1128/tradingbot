@@ -302,7 +302,7 @@ def create_orders(CE_Dict, PE_Dict):
         order_data['CE_Order_Id'] = CE_Order
         verify_order = verifyOrder(order_data['CE_Order_Id'])
         try:
-            if verify_order['status'] == 'COMPLETE':
+            if verify_order['status'] == kite.STATUS_COMPLETE:
                 order_data['CE_AVG_Price'] = verify_order["average_price"]
                 order_data['CE_Entry_Time'] = str(verify_order["order_timestamp"])
                 logger.info('{} {} order placed successfully'.format(order_data['CE_Trading_Signal'],
@@ -330,7 +330,7 @@ def create_orders(CE_Dict, PE_Dict):
         order_data['PE_Order_Id'] = PE_Order
         verify_order = verifyOrder(order_data['PE_Order_Id'])
         try:
-            if verify_order['status'] == 'COMPLETE':
+            if verify_order['status'] == kite.STATUS_COMPLETE:
                 order_data['PE_AVG_Price'] = verify_order["average_price"]
                 order_data['PE_Entry_Time'] = str(verify_order["order_timestamp"])
                 logger.info('{} {} order placed successfully'.format(order_data['PE_Trading_Signal'],
@@ -379,8 +379,6 @@ def create_orders(CE_Dict, PE_Dict):
             logger.error('{} {} order not available'.format(order_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
 
         # Create stoploss orders based on ce and pe avg prices
-        logger.info('Creating PE Stoploss order with {} Price'.format(order_data['CE_Stoploss_Price']))
-
         PE_Stoploss_Order = kite.place_order(
             variety=VARIETY,
             exchange=EXCHANGE,
@@ -437,8 +435,8 @@ def create_orders(CE_Dict, PE_Dict):
         logger.info('SELLING {} at {} Price'.format(order_data['CE_Trading_Signal'], order_data['CE_AVG_Price']))
         order_data['PE_Entry_Time'] = str(Current_Time).split(' ')[1]
         logger.info('SELLING {} at {} Price'.format(order_data['PE_Trading_Signal'], order_data['PE_AVG_Price']))
-        with open(swp_file, "w") as outfile:
-            json.dump(order_data, outfile)
+    with open(swp_file, "w") as outfile:
+        json.dump(order_data, outfile)
     return order_data
 
 
@@ -469,7 +467,7 @@ def live_data(order_data):
         # CE stoploss order
         ce_sl_order = verifyOrder(trade_data['CE_Stoploss_Order_Id'])
         try:
-            if ce_sl_order['status'] == 'COMPLETE':
+            if ce_sl_order['status'] == kite.STATUS_COMPLETE:
                 logger.info('{} Stoploss Triggered at {} price'.format(trade_data['CE_Trading_Signal'],
                                                                        ce_sl_order["average_price"]))
                 trade_data['ce_exit_price'] = ce_sl_order["average_price"]
@@ -483,7 +481,7 @@ def live_data(order_data):
         # PE stoploss order
         pe_sl_order = verifyOrder(trade_data['PE_Stoploss_Order_Id'])
         try:
-            if pe_sl_order['status'] == 'COMPLETE':
+            if pe_sl_order['status'] == kite.STATUS_COMPLETE:
                 logger.info('{} Stoploss Triggered at {} price'.format(trade_data['PE_Trading_Signal'],
                                                                        pe_sl_order["average_price"]))
                 trade_data['pe_exit_price'] = pe_sl_order["average_price"]

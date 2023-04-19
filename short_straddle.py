@@ -466,6 +466,7 @@ def live_data(order_data):
     if not args.dev:
         # CE stoploss order
         ce_sl_order = verifyOrder(trade_data['CE_Stoploss_Order_Id'])
+        print('ce_sl_order: {}'.format(ce_sl_order))
         try:
             if ce_sl_order['status'] == kite.STATUS_COMPLETE:
                 logger.info('{} Stoploss Triggered at {} price'.format(trade_data['CE_Trading_Signal'],
@@ -477,9 +478,10 @@ def live_data(order_data):
                 trade_data['ce_exit_time'] = None
         except KeyError as e:
             logger.error('{} {} order not available'.format(trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
-
+        print('ce_exit_price: {}'.format(trade_data['ce_exit_price']))
         # PE stoploss order
         pe_sl_order = verifyOrder(trade_data['PE_Stoploss_Order_Id'])
+        print('pe_sl_order: {}'.format(pe_sl_order))
         try:
             if pe_sl_order['status'] == kite.STATUS_COMPLETE:
                 logger.info('{} Stoploss Triggered at {} price'.format(trade_data['PE_Trading_Signal'],
@@ -491,6 +493,7 @@ def live_data(order_data):
                 trade_data['pe_exit_time'] = None
         except KeyError as e:
             logger.error('{} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
+        print('pe_exit_price: {}'.format(trade_data['pe_exit_price']))
 
     # Square off all trades at market end time
     while datetime.datetime.strptime(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -740,13 +743,13 @@ def live_data(order_data):
                                                                                           str(Current_Time).split(' ')[
                                                                                               1])
 
+        print('ce_exit_price: {}'.format(trade_data['ce_exit_price']))
+        print('pe_exit_price: {}'.format(trade_data['pe_exit_price']))
         trade_data['CE_PnL'] = round(
-            ((trade_data['CE_AVG_Price'] - trade_data['CE_Spot_Price']) * QUANTITY) if trade_data.get(
-                'ce_exit_price') is None else ((trade_data['CE_AVG_Price'] - trade_data['ce_exit_price']) * QUANTITY),
+            ((trade_data['CE_AVG_Price'] - trade_data['CE_Spot_Price']) * QUANTITY) if trade_data.get('ce_exit_price') is None else ((trade_data['CE_AVG_Price'] - trade_data['ce_exit_price']) * QUANTITY),
             2)
         trade_data['PE_PnL'] = round(
-            ((trade_data['PE_AVG_Price'] - trade_data['PE_Spot_Price']) * QUANTITY) if trade_data.get(
-                'pe_exit_price') is None else ((trade_data['PE_AVG_Price'] - trade_data['pe_exit_price']) * QUANTITY),
+            ((trade_data['PE_AVG_Price'] - trade_data['PE_Spot_Price']) * QUANTITY) if trade_data.get('pe_exit_price') is None else ((trade_data['PE_AVG_Price'] - trade_data['pe_exit_price']) * QUANTITY),
             2)
         if trade_data['max_profit'] < round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2):
             trade_data['max_profit'] = round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2)

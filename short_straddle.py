@@ -450,7 +450,6 @@ def live_data(order_data):
     trade_data['pe_trailing_count'] = 0
     trade_data['ce_sl_hit_price'] = 0
     trade_data['pe_sl_hit_price'] = 0
-    trade_data['max_profit'] = 0
     if trade_data.get('CE_TRAILING_STOPLOSS_PRICE') is None:
         trade_data['CE_TRAILING_STOPLOSS_PRICE'] = round((int(order_data['CE_AVG_Price']) - (
                 int(order_data['CE_AVG_Price']) * (
@@ -462,38 +461,6 @@ def live_data(order_data):
     Market_Close_datetime = datetime.datetime.strptime('{} {}'.format(str(datetime.date.today()), '15:15:00'),
                                                        '%Y-%m-%d %H:%M:%S')
 
-    # Verify Orders
-    if not args.dev:
-        # CE stoploss order
-        ce_sl_order = verifyOrder(trade_data['CE_Stoploss_Order_Id'])
-        print('ce_sl_order: {}'.format(ce_sl_order))
-        try:
-            if ce_sl_order['status'] == kite.STATUS_COMPLETE:
-                logger.info('{} Stoploss Triggered at {} price'.format(trade_data['CE_Trading_Signal'],
-                                                                       ce_sl_order["average_price"]))
-                trade_data['ce_exit_price'] = ce_sl_order["average_price"]
-                trade_data['ce_exit_time'] = str(ce_sl_order["exchange_timestamp"])
-            else:
-                trade_data['ce_exit_price'] = None
-                trade_data['ce_exit_time'] = None
-        except KeyError as e:
-            logger.error('{} {} order not available'.format(trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
-        print('ce_exit_price: {}'.format(trade_data['ce_exit_price']))
-        # PE stoploss order
-        pe_sl_order = verifyOrder(trade_data['PE_Stoploss_Order_Id'])
-        print('pe_sl_order: {}'.format(pe_sl_order))
-        try:
-            if pe_sl_order['status'] == kite.STATUS_COMPLETE:
-                logger.info('{} Stoploss Triggered at {} price'.format(trade_data['PE_Trading_Signal'],
-                                                                       pe_sl_order["average_price"]))
-                trade_data['pe_exit_price'] = pe_sl_order["average_price"]
-                trade_data['pe_exit_time'] = str(pe_sl_order["exchange_timestamp"])
-            else:
-                trade_data['pe_exit_price'] = None
-                trade_data['pe_exit_time'] = None
-        except KeyError as e:
-            logger.error('{} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
-        print('pe_exit_price: {}'.format(trade_data['pe_exit_price']))
 
     # Square off all trades at market end time
     while datetime.datetime.strptime(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -511,6 +478,40 @@ def live_data(order_data):
         trade_data['PE_Spot_Price'] = PE_Spot_Dict["{}:{}".format(EXCHANGE, trade_data['PE_Trading_Signal'])][
             'last_price']
 
+        if trade_data.get('max_profit') is None:
+            trade_data['max_profit'] = 0
+        # Verify Orders
+        if not args.dev:
+            # CE stoploss order
+            ce_sl_order = verifyOrder(trade_data['CE_Stoploss_Order_Id'])
+            print('ce_sl_order: {}'.format(ce_sl_order))
+            try:
+                if ce_sl_order['status'] == kite.STATUS_COMPLETE:
+                    logger.info('{} Stoploss Triggered at {} price'.format(trade_data['CE_Trading_Signal'],
+                                                                           ce_sl_order["average_price"]))
+                    trade_data['ce_exit_price'] = ce_sl_order["average_price"]
+                    trade_data['ce_exit_time'] = str(ce_sl_order["exchange_timestamp"])
+                else:
+                    trade_data['ce_exit_price'] = None
+                    trade_data['ce_exit_time'] = None
+            except KeyError as e:
+                logger.error('{} {} order not available'.format(trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
+            print('ce_exit_price: {}'.format(trade_data['ce_exit_price']))
+            # PE stoploss order
+            pe_sl_order = verifyOrder(trade_data['PE_Stoploss_Order_Id'])
+            print('pe_sl_order: {}'.format(pe_sl_order))
+            try:
+                if pe_sl_order['status'] == kite.STATUS_COMPLETE:
+                    logger.info('{} Stoploss Triggered at {} price'.format(trade_data['PE_Trading_Signal'],
+                                                                           pe_sl_order["average_price"]))
+                    trade_data['pe_exit_price'] = pe_sl_order["average_price"]
+                    trade_data['pe_exit_time'] = str(pe_sl_order["exchange_timestamp"])
+                else:
+                    trade_data['pe_exit_price'] = None
+                    trade_data['pe_exit_time'] = None
+            except KeyError as e:
+                logger.error('{} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
+            print('pe_exit_price: {}'.format(trade_data['pe_exit_price']))
         # Break if both orders have exit price
         if (trade_data.get('ce_exit_price') is not None) & (trade_data.get('pe_exit_price') is not None):
             logger.info('All trades completed successfully...!!!')

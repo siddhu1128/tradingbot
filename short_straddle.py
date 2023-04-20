@@ -241,26 +241,6 @@ class KiteApp:
 
 
 # funtions
-def squareoff(symbol, buy_sell, quantity, EXCHANGE):
-    # Place an intraday market order on NSE
-    if buy_sell == "buy":
-        t_type = kite.TRANSACTION_TYPE_BUY
-    elif buy_sell == "sell":
-        t_type = kite.TRANSACTION_TYPE_SELL
-    kite.place_order(tradingsymbol=symbol,
-                     exchange=EXCHANGE,
-                     transaction_type=t_type,
-                     quantity=quantity,
-                     order_type=kite.ORDER_TYPE_MARKET,
-                     product=kite.PRODUCT_MIS,
-                     variety=VARIETY)
-
-
-def CancelOrder(order_id):
-    # Modify order given order id
-    kite.cancel_order(order_id=order_id, variety=VARIETY)
-
-
 def verifyOrder(order_id):
     data = {}
     orders = kite.orders()
@@ -522,7 +502,7 @@ def live_data(order_data):
                                                                       second=int(EXIT_TIME.split(':')[2])):
             logger.info('Its time to say good bye...!!!')
             logger.info('Market is closing sweeping out all orders and positions...!!!')
-            if trade_data.get('ce_exit_price') is not None:
+            if trade_data.get('ce_exit_price') is None:
                 if not args.dev:
                     CE_Cancel_Order = kite.cancel_order(variety=VARIETY, order_id=trade_data['CE_Stoploss_Order_Id'])
                     CE_Squareoff_Order = kite.place_order(
@@ -550,7 +530,7 @@ def live_data(order_data):
                     trade_data['ce_exit_price'] = trade_data['CE_Spot_Price']
                     trade_data['ce_exit_time'] = str(Current_Time).split(' ')[1]
 
-            if trade_data.get('pe_exit_price') is not None:
+            if trade_data.get('pe_exit_price') is None:
                 if not args.dev:
                     PE_Cancel_Order = kite.cancel_order(variety=VARIETY, order_id=trade_data['PE_Stoploss_Order_Id'])
                     PE_Squareoff_Order = kite.place_order(

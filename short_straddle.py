@@ -871,10 +871,18 @@ while pe < len(PE_Symbol_List):
             PE_Trading_Signal = PE_Symbol_List[pe]
             break
     pe += 1
-
+CE_Trading_Signal = False
+PE_Trading_Signal = False
 if not CE_Trading_Signal or not PE_Trading_Signal:
-    if EXPIRY_DATE == datetime.date(EXPIRY_DATE.year, EXPIRY_DATE.month,
-                                    (calendar.monthrange(EXPIRY_DATE.year, EXPIRY_DATE.month)[1]) - 6):
+    last_day_of_month = calendar.monthrange(EXPIRY_DATE.year, EXPIRY_DATE.month)[1]
+    last_date = datetime.date(EXPIRY_DATE.year, EXPIRY_DATE.month, last_day_of_month)
+
+# Calculate the number of days between the last date and the last Thursday
+    days_until_last_thursday = (last_date.weekday() - 3) % 7
+
+# Subtract the number of days to get the last Thursday date
+    last_thursday = last_date - datetime.timedelta(days=days_until_last_thursday)
+    if EXPIRY_DATE == last_thursday:
         for instrument in instrument_list:
             ce_symbol = "BANKNIFTY" + "{}".format(
                 str(EXPIRY_DATE).split('-')[0][-2:] + EXPIRY_DATE.strftime('%b').upper()) + "{}".format(ATM) + "CE"
@@ -885,6 +893,7 @@ if not CE_Trading_Signal or not PE_Trading_Signal:
             if instrument['exchange'] == 'NFO' and instrument['tradingsymbol'] == pe_symbol:
                 PE_Trading_Signal = pe_symbol
 
+print(CE_Trading_Signal, PE_Trading_Signal)
 try:
     CE_Dict = kite.ltp(["{}:{}".format(EXCHANGE, CE_Trading_Signal)])
     PE_Dict = kite.ltp(["{}:{}".format(EXCHANGE, PE_Trading_Signal)])

@@ -790,6 +790,8 @@ except TypeError as e:
     logger.error('Enctoken expired please update enctoken and try again...!!!')
     exit(1)
 ATM = 100 * round(BN_LTP / 100)
+CE_Trading_Signal = False
+PE_Trading_Signal = False
 CE_Symbol_List = [
     "BANKNIFTY" + "{}".format(
         str(EXPIRY_DATE).split('-')[0][-2:] + re.sub(r'^0', '', str(EXPIRY_DATE).split('-')[1]) + re.sub(r'^0', '',
@@ -852,8 +854,7 @@ while pe < len(PE_Symbol_List):
             PE_Trading_Signal = PE_Symbol_List[pe]
             break
     pe += 1
-CE_Trading_Signal = False
-PE_Trading_Signal = False
+
 if not CE_Trading_Signal or not PE_Trading_Signal:
     last_day_of_month = calendar.monthrange(EXPIRY_DATE.year, EXPIRY_DATE.month)[1]
     last_date = datetime.date(EXPIRY_DATE.year, EXPIRY_DATE.month, last_day_of_month)

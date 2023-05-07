@@ -115,7 +115,7 @@ setup(
     # Use data_files in code with below code
     # config_file = os.path.join(os.path.dirname(__file__), 'config', 'config.ini')
     data_files=[('config', ['config/config.ini'])],
-    scripts=['short_straddle.py', 'kiteAPI', 'backtest'],
+    scripts=['short_straddle.py', 'kiteAPI.py', 'backtest.py'],
     url='https://github.com/siddhu1128/tradingbot',
     license='',
     author='Siddhartha',

@@ -284,4 +284,4 @@ def getGapPercent(signal, exchange, profile='default'):
 # getHistoricalData((datetime.date.today() - datetime.timedelta(60)), datetime.date.today(), 'minute', 'BANKNIFTY',
 #                   'NFO-OPT', profile='default')
 
-getGapPercent('NIFTY BANK', 'NSE', profile='default')
+# getGapPercent('NIFTY BANK', 'NSE', profile='default')

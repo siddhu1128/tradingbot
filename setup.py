@@ -109,12 +109,13 @@ setup(
         'pyotp',
         'python-dateutil',
         'django-bootstrap4',
-        'urllib3==1.26.6'
+        'urllib3==1.26.6',
+        'pyasn1==0.4.6'
     ],
     # Use data_files in code with below code
     # config_file = os.path.join(os.path.dirname(__file__), 'config', 'config.ini')
     data_files=[('config', ['config/config.ini'])],
-    scripts=['short_straddle.py'],
+    scripts=['short_straddle.py', 'kiteAPI', 'backtest'],
     url='https://github.com/siddhu1128/tradingbot',
     license='',
     author='Siddhartha',

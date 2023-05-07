@@ -6,18 +6,16 @@ import pandas as pd
 import argparse
 import logging
 from pathlib import Path
-import requests
-import dateutil
 import json
 import calendar
-from kiteconnect import KiteConnect
-from pyotp import TOTP
 import configparser
+import kiteAPI
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dev', action="store_true", default=False)
 parser.add_argument('--continue', dest='continueTrade', action="store_true", default=False)
 parser.add_argument('-t', '--token', dest='token', type=str, help="zerodha token")
+parser.add_argument('-p', '--profile', dest='profile', default='default', type=str, help="configuration profile")
 parser.add_argument('--target', dest='target', type=int, help="target in rupees")
 parser.add_argument('-e', '--expiry', dest='expiry_date', type=str, help="Banknifty expiry date")
 parser.add_argument('--config', dest='config', required=True, help="config file full path with filename")
@@ -29,7 +27,9 @@ logfilegroup.add_argument('--icloud', action="store_true",
 args = parser.parse_args()
 
 config = configparser.ConfigParser()
-config.read(str(args.config))
+config_file = os.path.join(os.path.dirname(__file__), 'config', 'config.ini')
+# config_file = str(args.config)
+config.read(config_file)
 
 if args.icloud:
     # Use icloud drive to save logs
@@ -107,139 +107,6 @@ trading_log = pd.DataFrame()
 trailing_stoploss_log = {}
 
 
-class KiteApp:
-    # Products
-    PRODUCT_MIS = "MIS"
-    PRODUCT_CNC = "CNC"
-    PRODUCT_NRML = "NRML"
-    PRODUCT_CO = "CO"
-
-    # Order types
-    ORDER_TYPE_MARKET = "MARKET"
-    ORDER_TYPE_LIMIT = "LIMIT"
-    ORDER_TYPE_SLM = "SL-M"
-    ORDER_TYPE_SL = "SL"
-
-    # Varities
-    VARIETY_REGULAR = "regular"
-    VARIETY_CO = "co"
-    VARIETY_AMO = "amo"
-
-    # Transaction type
-    TRANSACTION_TYPE_BUY = "BUY"
-    TRANSACTION_TYPE_SELL = "SELL"
-
-    # Validity
-    VALIDITY_DAY = "DAY"
-    VALIDITY_IOC = "IOC"
-
-    # Exchanges
-    EXCHANGE_NSE = "NSE"
-    EXCHANGE_BSE = "BSE"
-    EXCHANGE_NFO = "NFO"
-    EXCHANGE_CDS = "CDS"
-    EXCHANGE_BFO = "BFO"
-    EXCHANGE_MCX = "MCX"
-
-    def __init__(self, enctoken):
-        self.headers = {"Authorization": f"enctoken {enctoken}"}
-        self.session = requests.session()
-        self.root_url = "https://api.kite.trade"
-        # self.root_url = "https://kite.zerodha.com/oms"
-        self.session.get(self.root_url, headers=self.headers)
-
-    def instruments(self, exchange=None):
-        data = self.session.get(f"{self.root_url}/instruments", headers=self.headers).text.split("\n")
-        Exchange = []
-        for i in data[1:-1]:
-            row = i.split(",")
-            if exchange is None or exchange == row[11]:
-                Exchange.append({'instrument_token': int(row[0]), 'exchange_token': row[1], 'tradingsymbol': row[2],
-                                 'name': row[3][1:-1], 'last_price': float(row[4]),
-                                 'expiry': dateutil.parser.parse(row[5]).date() if row[5] != "" else None,
-                                 'strike': float(row[6]), 'tick_size': float(row[7]), 'lot_size': int(row[8]),
-                                 'instrument_type': row[9], 'segment': row[10],
-                                 'exchange': row[11]})
-        return Exchange
-
-    def quote(self, instruments):
-        data = self.session.get(f"{self.root_url}/quote", params={"i": instruments}, headers=self.headers).json()[
-            "data"]
-        return data
-
-    def ltp(self, instruments):
-        data = self.session.get(f"{self.root_url}/quote/ltp", params={"i": instruments}, headers=self.headers).json()[
-            "data"]
-        return data
-
-    def historical_data(self, instrument_token, from_date, to_date, interval, continuous=False, oi=False):
-        params = {"from": from_date,
-                  "to": to_date,
-                  "interval": interval,
-                  "continuous": 1 if continuous else 0,
-                  "oi": 1 if oi else 0}
-        lst = self.session.get(
-            f"{self.root_url}/instruments/historical/{instrument_token}/{interval}", params=params,
-            headers=self.headers).json()["data"]["candles"]
-        records = []
-        for i in lst:
-            record = {"date": dateutil.parser.parse(i[0]), "open": i[1], "high": i[2], "low": i[3],
-                      "close": i[4], "volume": i[5], }
-            if len(i) == 7:
-                record["oi"] = i[6]
-            records.append(record)
-        return records
-
-    def margins(self):
-        margins = self.session.get(f"{self.root_url}/user/margins", headers=self.headers).json()["data"]
-        return margins
-
-    def orders(self):
-        orders = self.session.get(f"{self.root_url}/orders", headers=self.headers).json()["data"]
-        return orders
-
-    def positions(self):
-        positions = self.session.get(f"{self.root_url}/portfolio/positions", headers=self.headers).json()["data"]
-        return positions
-
-    def place_order(self, variety, exchange, tradingsymbol, transaction_type, quantity, product, order_type, price=None,
-                    validity=None, disclosed_quantity=None, trigger_price=None, squareoff=None, stoploss=None,
-                    trailing_stoploss=None, tag=None):
-        # Remove 'self' from the params dictionary
-        params = {k: v for k, v in locals().items() if k != 'self'}
-
-        # Remove any keys with a None value from the params dictionary
-        params = {k: v for k, v in params.items() if v is not None}
-
-        # Send the request and handle errors
-        response = self.session.post(f"{self.root_url}/orders/{variety}", data=params, headers=self.headers).json()
-        print(response)
-        if response.get('status') == 'error':
-            logger.error(f"Unable to place {tradingsymbol} {transaction_type} order, Reason: {response['message']}")
-        return response["data"]
-
-    def modify_order(self, variety, order_id, parent_order_id=None, quantity=None, price=None, order_type=None,
-                     trigger_price=None, validity=None, disclosed_quantity=None):
-        # Remove 'self' from the params dictionary
-        params = {k: v for k, v in locals().items() if k != 'self'}
-
-        # Remove any keys with a None value from the params dictionary
-        params = {k: v for k, v in params.items() if v is not None}
-
-        response = self.session.put(f"{self.root_url}/orders/{variety}/{order_id}", data=params,
-                                    headers=self.headers).json()
-        print(response)
-        if response.get('status') == 'error':
-            logger.error(f"Unable to modify order, Reason: {response['message']}")
-        return response["data"]
-
-    def cancel_order(self, variety, order_id, parent_order_id=None):
-        order_id = self.session.delete(f"{self.root_url}/orders/{variety}/{order_id}",
-                                       data={"parent_order_id": parent_order_id} if parent_order_id else {},
-                                       headers=self.headers).json()["data"]["order_id"]
-        return order_id
-
-
 # funtions
 def verifyOrder(order_id):
     data = {}
@@ -266,7 +133,6 @@ def create_orders(CE_Dict, PE_Dict):
     order_data['CE_Trading_Signal'] = CE_Trading_Signal
     order_data['PE_Trading_Signal'] = PE_Trading_Signal
     if not args.dev:
-
         # Zerodha Sell call
         CE_Order = kite.place_order(
             variety=VARIETY,
@@ -441,7 +307,6 @@ def live_data(order_data):
     Market_Close_datetime = datetime.datetime.strptime('{} {}'.format(str(datetime.date.today()), '15:15:00'),
                                                        '%Y-%m-%d %H:%M:%S')
 
-
     # Square off all trades at market end time
     while datetime.datetime.strptime(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                      '%Y-%m-%d %H:%M:%S') <= Market_Close_datetime:
@@ -475,7 +340,8 @@ def live_data(order_data):
                     trade_data['ce_exit_price'] = None
                     trade_data['ce_exit_time'] = None
             except KeyError as e:
-                logger.error('{} {} order not available'.format(trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
+                logger.error(
+                    '{} {} order not available'.format(trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
             print('ce_exit_price: {}'.format(trade_data['ce_exit_price']))
             # PE stoploss order
             pe_sl_order = verifyOrder(trade_data['PE_Stoploss_Order_Id'])
@@ -490,7 +356,8 @@ def live_data(order_data):
                     trade_data['pe_exit_price'] = None
                     trade_data['pe_exit_time'] = None
             except KeyError as e:
-                logger.error('{} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
+                logger.error(
+                    '{} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
             print('pe_exit_price: {}'.format(trade_data['pe_exit_price']))
         # Break if both orders have exit price
         if (trade_data.get('ce_exit_price') is not None) & (trade_data.get('pe_exit_price') is not None):
@@ -727,10 +594,12 @@ def live_data(order_data):
         print('ce_exit_price: {}'.format(trade_data['ce_exit_price']))
         print('pe_exit_price: {}'.format(trade_data['pe_exit_price']))
         trade_data['CE_PnL'] = round(
-            ((trade_data['CE_AVG_Price'] - trade_data['CE_Spot_Price']) * QUANTITY) if trade_data.get('ce_exit_price') is None else ((trade_data['CE_AVG_Price'] - trade_data['ce_exit_price']) * QUANTITY),
+            ((trade_data['CE_AVG_Price'] - trade_data['CE_Spot_Price']) * QUANTITY) if trade_data.get(
+                'ce_exit_price') is None else ((trade_data['CE_AVG_Price'] - trade_data['ce_exit_price']) * QUANTITY),
             2)
         trade_data['PE_PnL'] = round(
-            ((trade_data['PE_AVG_Price'] - trade_data['PE_Spot_Price']) * QUANTITY) if trade_data.get('pe_exit_price') is None else ((trade_data['PE_AVG_Price'] - trade_data['pe_exit_price']) * QUANTITY),
+            ((trade_data['PE_AVG_Price'] - trade_data['PE_Spot_Price']) * QUANTITY) if trade_data.get(
+                'pe_exit_price') is None else ((trade_data['PE_AVG_Price'] - trade_data['pe_exit_price']) * QUANTITY),
             2)
         if trade_data['max_profit'] < round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2):
             trade_data['max_profit'] = round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2)
@@ -746,7 +615,8 @@ def live_data(order_data):
             round(trade_data['PE_Spot_Price'], 2),
             trade_data['pe_exit_price'],
             round(trade_data['PE_PnL'], 2)))
-        logger.info('Total PnL: {}, Max_profit: {}'.format(round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2), trade_data['max_profit']))
+        logger.info('Total PnL: {}, Max_profit: {}'.format(round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2),
+                                                           trade_data['max_profit']))
         with open(swp_file, "w") as outfile:
             json.dump(trade_data, outfile)
         time.sleep(5)
@@ -754,30 +624,20 @@ def live_data(order_data):
 
 
 ## Auto Login Funtion
-session = requests.Session()
-response = session.post("https://kite.zerodha.com/api/login", data={'user_id': USERNAME, 'password': PASSWORD})
-request_id = json.loads(response.text)['data']['request_id']
-twofa_pin = TOTP(TOTP_Key).now()
-response_1 = session.post("https://kite.zerodha.com/api/twofa",
-                          data={'user_id': USERNAME, 'request_id': request_id, 'twofa_value': twofa_pin,
-                                'twofa_type': 'totp'})
-kite = KiteConnect(api_key=api_key)
-kite_url = kite.login_url()
+kite = kiteAPI.autologin(profile=args.profile)
 
-try:
-    session.get(kite_url)
-except Exception as e:
-    e_msg = str(e)
-    # print(e_msg)
-    request_token = e_msg.split('request_token=')[1].split(' ')[0].split('&action')[0]
-    print('Successful Login with Request Token:{}'.format(request_token))
+# Checking Gap Percentage
+gapPercent = kiteAPI.getGapPercent('NIFTY BANK', 'NSE')
+if gapPercent is not None:
+    if abs(gapPercent) >= 0.4:
+        wait_time = "10:15"
+        while True:
+            current_time = time.strftime("%H:%M")
+            if current_time >= wait_time:
+                break
+            time.sleep(60)
 
-access_token = kite.generate_session(request_token, api_secret)['access_token']
-kite.set_access_token(access_token)
-## End of auto login
 
-# enctoken = args.token
-# kite = KiteApp(enctoken=enctoken)
 EXCHANGE = kite.EXCHANGE_NFO
 VARIETY = kite.VARIETY_REGULAR
 ORDER_TYPE = kite.ORDER_TYPE_MARKET
@@ -859,10 +719,10 @@ if not CE_Trading_Signal or not PE_Trading_Signal:
     last_day_of_month = calendar.monthrange(EXPIRY_DATE.year, EXPIRY_DATE.month)[1]
     last_date = datetime.date(EXPIRY_DATE.year, EXPIRY_DATE.month, last_day_of_month)
 
-# Calculate the number of days between the last date and the last Thursday
+    # Calculate the number of days between the last date and the last Thursday
     days_until_last_thursday = (last_date.weekday() - 3) % 7
 
-# Subtract the number of days to get the last Thursday date
+    # Subtract the number of days to get the last Thursday date
     last_thursday = last_date - datetime.timedelta(days=days_until_last_thursday)
     if EXPIRY_DATE == last_thursday:
         for instrument in instrument_list:

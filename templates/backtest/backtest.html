@@ -1,0 +1,63 @@
+{% extends 'backtest/base.html' %}
+{% load bootstrap4 %}
+
+{% block content %}
+<div class="row">
+    <form>
+        <div class="md-3 row">
+            <label class="col-sm-2 col-form-label">Select Index</label>
+            <div class="col-sm-2">
+                <select class="form-select form-select-sm" aria-label="Default select example">
+                    <option selected>BankNifty</option>
+                    <option value="2">Nifty</option>
+                    <option value="3">Finnifty</option>
+                </select>
+            </div>
+            <label class="col-sm-2 col-form-label">Option Type</label>
+            <div class="col-sm-2">
+                <select class="form-select form-select-sm" aria-label="Default select example">
+                    <option selected>Select</option>
+                    <option value="2">CALL</option>
+                    <option value="3">PUT</option>
+                </select>
+            </div>
+            <label class="col-sm-2 col-form-label">Action Type</label>
+            <div class="col-sm-2">
+                <select class="form-select form-select-sm" aria-label="Default select example">
+                    <option selected>Select</option>
+                    <option value="2">BUY</option>
+                    <option value="3">SELL</option>
+                </select>
+            </div>
+            <label class="col-sm-2 col-form-label">Strike Price</label>
+            <div class="col-sm-2">
+                <select class="form-select form-select-sm" aria-label="Default select example">
+                    <option selected>ATM</option>
+                    <option value="2">ATM +100</option>
+                    <option value="3">ATM -100</option>
+                </select>
+            </div>
+            <label class="col-sm-2 col-form-label">Lot Size</label>
+            <div class="col-sm-2">
+                <select class="form-select form-select-sm" aria-label="Default select example">
+                    <option selected>1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
+            </div>
+            <label class="col-sm-2 col-form-label">Expiry</label>
+            <div class="col-sm-2">
+                <select class="form-select form-select-sm" aria-label="Default select example">
+                    <option selected>Weekly</option>
+                    <option value="2">Monthly</option>
+                </select>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-sm-2">
+                <button type="submit" class="btn btn-primary btn-sm">Add</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

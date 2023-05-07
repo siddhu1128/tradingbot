@@ -18,7 +18,7 @@ parser.add_argument('-t', '--token', dest='token', type=str, help="zerodha token
 parser.add_argument('-p', '--profile', dest='profile', default='default', type=str, help="configuration profile")
 parser.add_argument('--target', dest='target', type=int, help="target in rupees")
 parser.add_argument('-e', '--expiry', dest='expiry_date', type=str, help="Banknifty expiry date")
-parser.add_argument('--config', dest='config', required=True, help="config file full path with filename")
+parser.add_argument('--config', dest='config', required=False, help="config file full path with filename")
 logfilegroup = parser.add_mutually_exclusive_group(required=True)
 logfilegroup.add_argument('--log', dest='logpath',
                           help="Log location do not give any file names eg: /Users/siddhu/Documents/TradingPot")

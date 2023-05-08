@@ -10,6 +10,7 @@ import json
 import calendar
 import configparser
 import kiteAPI
+import pkg_resources
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dev', action="store_true", default=False)
@@ -27,7 +28,7 @@ logfilegroup.add_argument('--icloud', action="store_true",
 args = parser.parse_args()
 
 config = configparser.ConfigParser()
-config_file = os.path.join(os.path.dirname(__file__), 'config', 'config.ini')
+config_file = pkg_resources.resource_filename('config', 'config.ini')
 # config_file = str(args.config)
 config.read(config_file)
 

@@ -7,10 +7,11 @@ import json
 import pandas as pd
 import datetime
 import dateutil
+import pkg_resources
 
 # Load Config file
 config = configparser.ConfigParser()
-config_file = os.path.join(os.path.dirname(__file__), 'config', 'config.ini')
+config_file = config_file = pkg_resources.resource_filename('config', 'config.ini')
 # config_file = "/Users/siddhu/IdeaProjects/config.ini"
 config.read(config_file)
 

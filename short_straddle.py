@@ -508,6 +508,9 @@ def live_data(order_data):
             logger.info('{} LTP reaches {}% Trailing stoploss by {}%'.format(trade_data['CE_Trading_Signal'],
                                                                              TRAILING_STOPLOSS.split(':')[0],
                                                                              TRAILING_STOPLOSS.split(':')[1]))
+            kiteAPI.pushover('{} LTP reaches {}% Trailing stoploss by {}%'.format(trade_data['CE_Trading_Signal'],
+                                                                                  TRAILING_STOPLOSS.split(':')[0],
+                                                                                  TRAILING_STOPLOSS.split(':')[1]))
             if not args.dev:
                 try:
                     if ce_sl_order['status'] == 'TRIGGER PENDING':
@@ -554,6 +557,9 @@ def live_data(order_data):
             logger.info('{} LTP reaches {}% Trailing stoploss by {}%'.format(trade_data['PE_Trading_Signal'],
                                                                              TRAILING_STOPLOSS.split(':')[0],
                                                                              TRAILING_STOPLOSS.split(':')[1]))
+            kiteAPI.pushover('{} LTP reaches {}% Trailing stoploss by {}%'.format(trade_data['PE_Trading_Signal'],
+                                                                                  TRAILING_STOPLOSS.split(':')[0],
+                                                                                  TRAILING_STOPLOSS.split(':')[1]))
             if not args.dev:
                 try:
                     if pe_sl_order['status'] == 'TRIGGER PENDING':

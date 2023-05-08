@@ -8,6 +8,7 @@ import pandas as pd
 import datetime
 import dateutil
 import pkg_resources
+import http.client, urllib
 
 # Load Config file
 config = configparser.ConfigParser()
@@ -279,6 +280,18 @@ def getGapPercent(signal, exchange, profile='default'):
         gap_percentage = None
         print("Unable to fetch today 9:15 Open data")
     return gap_percentage
+
+def pushover(message, profile='default'):
+    API_TOKEN = config.get(profile, 'Pushover_API_Key')
+    USER_KEY = config.get(profile, 'Pushover_USER_Key')
+    conn = http.client.HTTPSConnection("api.pushover.net:443")
+    conn.request("POST", "/1/messages.json",
+                 urllib.parse.urlencode({
+                     "token": API_TOKEN,
+                     "user": USER_KEY,
+                     "message": message,
+                 }), { "Content-type": "application/x-www-form-urlencoded" })
+    return conn.getresponse()
 
 
 # scheduleHistoricalDump('BANKNIFTY', 'NFO-OPT', 'minute', profile='default')

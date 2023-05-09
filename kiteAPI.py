@@ -1,8 +1,11 @@
 import configparser
 import os
+import time
+
 import requests
 from pyotp import TOTP
 from kiteconnect import KiteConnect
+import kiteconnect
 import json
 import pandas as pd
 import datetime
@@ -175,7 +178,6 @@ def autologin(method=None, profile='default'):
         kite = KiteApp(enctoken)
 
     kite.timeout = 60
-    instrument_dump = kite.instruments()
     return kite
 
 
@@ -256,30 +258,45 @@ def schedule_banknifty_historical_data():
     scheduleHistoricalDump('BANKNIFTY', 'NFO-OPT', 'minute', profile='default')
 
 
-def getGapPercent(signal, exchange, profile='default'):
-    kite = autologin('enctoken', profile)
-    # Get the instrument token for BANKNIFTY
-    instrument = kite.instruments(exchange)
+def getGapPercent(signal, exchange, from_date, to_date, profile='default'):
+    while True:
+        try:
+            kite = autologin(profile)
+            # Get the instrument token for BANKNIFTY
+            instrument = kite.instruments(exchange)
+            break
+        except kiteconnect.exceptions.DataException:
+            time.sleep(5)
+
     instrument_df = pd.DataFrame(instrument)
+    date_format = '%Y-%m-%d'
     for i in range(len(instrument)):
         if instrument[i]["tradingsymbol"] == signal.upper():
             instrument_token = instrument[i]["instrument_token"]
 
     # Get the previous day's closing price of BANKNIFTY
-    historical_candles = kite.historical_data(instrument_token, (datetime.datetime.now() - datetime.timedelta(days=5)).strftime("%Y-%m-%d"), datetime.datetime.now().strftime("%Y-%m-%d"), "minute")
+    historical_candles = kite.historical_data(instrument_token,
+                                              datetime.datetime.strptime(from_date, date_format).date(), datetime.datetime.strptime(to_date, date_format).date(), "minute")
     historical_df = pd.DataFrame(historical_candles)
-    today_datetime = datetime.datetime(datetime.datetime.now().year, datetime.datetime.now().month, datetime.datetime.now().day, 9, 15, tzinfo=datetime.timezone(datetime.timedelta(hours=5, minutes=30)))
-    try:
-        current_day_open = historical_df[historical_df['date'] == today_datetime].open.iloc[0]
-        previous_date = historical_df['date'].dt.date.drop_duplicates().iloc[-2]
-        previous_day_datetime = datetime.datetime(previous_date.year, previous_date.month, previous_date.day, 15, 29, tzinfo=datetime.timezone(datetime.timedelta(hours=5, minutes=30)))
-        previous_day_close = historical_df[historical_df['date'] == previous_day_datetime].close.iloc[0]
-        # Calculate the gap up or down percentage
-        gap_percentage = round(((current_day_open - previous_day_close) / previous_day_close) * 100, 2)
-    except IndexError:
-        gap_percentage = None
-        print("Unable to fetch today 9:15 Open data")
-    return gap_percentage
+    date_df = historical_df['date'].dt.date.drop_duplicates()
+    gapPercentDict = {}
+    for i in range(len(date_df)):
+        if i == 0:
+            pass
+        else:
+            curr_date = date_df.iloc[i]
+            curr_datetime = datetime.datetime(curr_date.year, curr_date.month, curr_date.day, 9, 15,
+                                              tzinfo=datetime.timezone(datetime.timedelta(hours=5, minutes=30)))
+            current_day_open = historical_df[historical_df['date'] == curr_datetime].open.iloc[0]
+            prev_date = date_df.iloc[i - 1]
+            prev_datetime = datetime.datetime(prev_date.year, prev_date.month, prev_date.day, 15, 29,
+                                              tzinfo=datetime.timezone(datetime.timedelta(hours=5, minutes=30)))
+            previous_day_close = historical_df[historical_df['date'] == prev_datetime].close.iloc[0]
+            gapPercentDict[date_df.iloc[i]] = round(
+                ((current_day_open - previous_day_close) / previous_day_close) * 100, 2)
+    gap_percentage_df = pd.DataFrame.from_dict(gapPercentDict, orient='index', columns=['gapPercent'])
+    return gap_percentage_df
+
 
 def pushover(message, profile='default'):
     API_TOKEN = config.get(profile, 'Pushover_API_Key')
@@ -290,7 +307,7 @@ def pushover(message, profile='default'):
                      "token": API_TOKEN,
                      "user": USER_KEY,
                      "message": message,
-                 }), { "Content-type": "application/x-www-form-urlencoded" })
+                 }), {"Content-type": "application/x-www-form-urlencoded"})
     return conn.getresponse()
 
 
@@ -298,4 +315,4 @@ def pushover(message, profile='default'):
 # getHistoricalData((datetime.date.today() - datetime.timedelta(60)), datetime.date.today(), 'minute', 'BANKNIFTY',
 #                   'NFO-OPT', profile='default')
 
-# getGapPercent('NIFTY BANK', 'NSE', profile='default')
+# getGapPercent('INDIA VIX', 'NSE', '2023-04-05', '2023-05-09', profile='default')

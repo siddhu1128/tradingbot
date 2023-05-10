@@ -214,7 +214,7 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
     vix_token = nse_df[nse_df.tradingsymbol == 'INDIA VIX'].iloc[0].instrument_token
     vix_df = pd.DataFrame(kite.historical_data(vix_token, from_date, to_date, "minute"))
     vix_df.set_index('date', inplace=True)
-    vix_df.to_sql('IndiaVix', db, if_exists='replace')
+    vix_df.to_sql('backtest_indiavix', db, if_exists='replace')
     vix_df = vix_df.rename(columns={'open': 'vix_open', 'high': 'vix_high', 'low': 'vix_low', 'close': 'vix_close',
                                     'volume': 'vix_volume'})
 
@@ -222,31 +222,31 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
     bn_token = nse_df[nse_df.tradingsymbol == 'NIFTY BANK'].iloc[0].instrument_token
     bn_df = pd.DataFrame(kite.historical_data(bn_token, from_date, to_date, "minute"))
     bn_df.set_index('date', inplace=True)
-    bn_df.to_sql('BankniftyIndex', db, if_exists='replace')
+    bn_df.to_sql('backtest_bankniftyindex', db, if_exists='replace')
 
     # Nifty Index
     nf_token = nse_df[nse_df.tradingsymbol == 'NIFTY 50'].iloc[0].instrument_token
     nf_df = pd.DataFrame(kite.historical_data(nf_token, from_date, to_date, "minute"))
     nf_df.set_index('date', inplace=True)
-    nf_df.to_sql('NiftyIndex', db, if_exists='replace')
+    nf_df.to_sql('backtest_niftyindex', db, if_exists='replace')
 
     # FINNifty Index
     fn_token = nse_df[nse_df.tradingsymbol == 'NIFTY FIN SERVICE'].iloc[0].instrument_token
     fn_df = pd.DataFrame(kite.historical_data(fn_token, from_date, to_date, "minute"))
     fn_df.set_index('date', inplace=True)
-    fn_df.to_sql('FinniftyIndex', db, if_exists='replace')
+    fn_df.to_sql('backtest_finniftyindex', db, if_exists='replace')
 
     signals = ['BANKNIFTY', 'NIFTY', 'FINNIFTY']
     for i in signals:
         if i == 'BANKNIFTY':
             signal = 'BANKNIFTY'
-            table = 'BankniftyOptions'
+            table = 'backtest_bankniftyoptions'
         elif i == 'NIFTY':
             signal = 'NIFTY'
-            table = 'NiftyOptions'
+            table = 'backtest_niftyoptions'
         elif i == 'FINNIFTY':
             signal = 'FINNIFTY'
-            table = 'FinniftyOptions'
+            table = 'backtest_finniftyoptions'
         # exchange = "NFO-OPT"
         # fut_df = instrument_df[instrument_df["segment"] == exchange.upper()]
         # BN_df = fut_df[fut_df.name == signal.upper()]
@@ -342,4 +342,4 @@ def pushover(message, profile='default'):
 
 # getGapPercent('INDIA VIX', 'NSE', '2023-04-05', '2023-05-09', profile='default')
 
-schedule_historical_data()
+# schedule_historical_data()

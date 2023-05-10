@@ -1,5 +1,7 @@
 from setuptools import setup, find_packages, Command
 import os
+from glob import glob
+
 
 
 class ConfigCommand(Command):
@@ -97,6 +99,8 @@ DATA_FILE_LOCATION = {DUMPFILELOCATION}
         print('{} file generated successfully.'.format(config_file))
 
 
+template_files = [os.path.relpath(f'templates/{f}', 'templates') for f in glob('templates/**', recursive=True) if os.path.isfile(f)]
+
 setup(
     name='tradingbot',
     version='0.1',
@@ -108,17 +112,15 @@ setup(
         'kiteconnect',
         'pyotp',
         'python-dateutil',
-        'django-bootstrap4',
         'urllib3==1.26.6',
         'pyasn1==0.4.6',
         'cryptography>=38.0.0,<41.0.0',
-        'attrs'
+        'attrs',
+        'django'
     ],
     # Use data_files in code with below code
     # config_file = os.path.join(os.path.dirname(__file__), 'config', 'config.ini')
-    data_files=[('config', ['config/config.ini'])],
-    include_package_data=True,
-    scripts=['short_straddle.py', 'kiteAPI.py', 'backtest.py', 'manage.py', 'test.py'],
+    data_files=[('config', ['config/config.ini']), ('', ['kiteAPI.py', 'manage.py', 'short_straddle.py', 'db.sqlite3']), ('templates', template_files)],
     url='https://github.com/siddhu1128/tradingbot',
     license='',
     author='Siddhartha',
@@ -129,7 +131,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'scheduleBankNiftyHistoricalData = kiteAPI:schedule_banknifty_historical_data'
+            'scheduleBankNiftyHistoricalData = kiteAPI:schedule_historical_data'
         ]
-    }
+    },
 )

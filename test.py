@@ -1,6 +1,5 @@
 import pkg_resources
 import configparser
-import kiteAPI
 
 config = configparser.ConfigParser()
 config_file = pkg_resources.resource_filename('config', 'config.ini')

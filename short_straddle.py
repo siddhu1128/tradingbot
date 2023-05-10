@@ -165,9 +165,9 @@ def create_orders(CE_Dict, PE_Dict):
                                                                                   verify_order['status'],
                                                                              verify_order['status_message']))
                 kiteAPI.pushover('Error: Retrying {} {} order Status: {}, Reason: {}'.format(order_data['CE_Trading_Signal'],
-                                                                                 kite.TRANSACTION_TYPE_SELL,
-                                                                                    verify_order['status'],
-                                                                                 verify_order['status_message']))
+                                                                                             kite.TRANSACTION_TYPE_SELL,
+                                                                                             verify_order['status'],
+                                                                                             verify_order['status_message']))
                 retry = 0
                 while verify_order['status'] != kite.STATUS_COMPLETE and verify_order['status'] != 'PENDING':
                     if retry <= 2:
@@ -195,9 +195,9 @@ def create_orders(CE_Dict, PE_Dict):
                                                                                               verify_order['status'],
                                                                                          verify_order['status_message']))
                             kiteAPI.pushover('Error: Retrying {} {} order Status: {}, Reason: {}'.format(order_data['CE_Trading_Signal'],
-                                                                                                    kite.TRANSACTION_TYPE_SELL,
+                                                                                                         kite.TRANSACTION_TYPE_SELL,
                                                                                                          verify_order['status'],
-                                                                                                    verify_order['status_message']))
+                                                                                                         verify_order['status_message']))
                         retry += 1
                         time.sleep(5)
                     else:
@@ -206,9 +206,9 @@ def create_orders(CE_Dict, PE_Dict):
                                                                                  verify_order['status'],
                                                                               verify_order['status_message']))
                         kiteAPI.pushover('Error: Unable to place {} {} order Status: {}, Reason: {}'.format(order_data['CE_Trading_Signal'],
-                                                                                        kite.TRANSACTION_TYPE_SELL,
-                                                                                        verify_order['status'],
-                                                                                        verify_order['status_message']))
+                                                                                                            kite.TRANSACTION_TYPE_SELL,
+                                                                                                            verify_order['status'],
+                                                                                                            verify_order['status_message']))
                         exit(1)
         except KeyError as e:
             logger.error(
@@ -240,9 +240,9 @@ def create_orders(CE_Dict, PE_Dict):
                                                                                   verify_order['status'],
                                                                              verify_order['status_message']))
                 kiteAPI.pushover('Error: Retrying {} {} order Status:{}, Reason: {}'.format(order_data['PE_Trading_Signal'],
-                                                                                 kite.TRANSACTION_TYPE_SELL,
-                                                                                verify_order['status'],
-                                                                                 verify_order['status_message']))
+                                                                                            kite.TRANSACTION_TYPE_SELL,
+                                                                                            verify_order['status'],
+                                                                                            verify_order['status_message']))
                 retry = 0
                 while verify_order['status'] != kite.STATUS_COMPLETE and verify_order['status'] != 'PENDING':
                     if retry <= 2:
@@ -269,9 +269,9 @@ def create_orders(CE_Dict, PE_Dict):
                                                                                     verify_order['status'],
                                                                                   verify_order['status_message']))
                             kiteAPI.pushover('Error: Retrying {} {} order Status: {}, Reason: {}'.format(order_data['PE_Trading_Signal'],
-                                                                                             kite.TRANSACTION_TYPE_SELL,
-                                                                                             verify_order['status'],
-                                                                                             verify_order['status_message']))
+                                                                                                         kite.TRANSACTION_TYPE_SELL,
+                                                                                                         verify_order['status'],
+                                                                                                         verify_order['status_message']))
                         retry += 1
                         time.sleep(5)
                     else:
@@ -280,9 +280,9 @@ def create_orders(CE_Dict, PE_Dict):
                                                                                 verify_order['status'],
                                                                               verify_order['status_message']))
                         kiteAPI.pushover('Error: Unable to place {} {} order Status: {}, Reason: {}'.format(order_data['PE_Trading_Signal'],
-                                                                                         kite.TRANSACTION_TYPE_SELL,
-                                                                                        verify_order['status'],
-                                                                                         verify_order['status_message']))
+                                                                                                            kite.TRANSACTION_TYPE_SELL,
+                                                                                                            verify_order['status'],
+                                                                                                            verify_order['status_message']))
                         exit(1)
         except KeyError as e:
             logger.error(
@@ -324,9 +324,9 @@ def create_orders(CE_Dict, PE_Dict):
                                                                                          verify_order['status'],
                                                                                      verify_order['status_message']))
                         kiteAPI.pushover('Error: Retrying {} {} order Status:{}, Reason: {}'.format(order_data['CE_Trading_Signal'],
-                                                                                        kite.TRANSACTION_TYPE_BUY,
-                                                                                        verify_order['status'],
-                                                                                        verify_order['status_message']))
+                                                                                                    kite.TRANSACTION_TYPE_BUY,
+                                                                                                    verify_order['status'],
+                                                                                                    verify_order['status_message']))
                         CE_Stoploss_Order = kite.place_order(
                             variety=VARIETY,
                             exchange=EXCHANGE,
@@ -350,9 +350,9 @@ def create_orders(CE_Dict, PE_Dict):
                                                                                      verify_order['status'],
                                                                                      verify_order['status_message']))
                         kiteAPI.pushover('Error: Unable to place {} {} order Status: {}, Reason: {}'.format(order_data['CE_Trading_Signal'],
-                                                                                                kite.TRANSACTION_TYPE_BUY,
-                                                                                                verify_order['status'],
-                                                                                                verify_order['status_message']))
+                                                                                                            kite.TRANSACTION_TYPE_BUY,
+                                                                                                            verify_order['status'],
+                                                                                                            verify_order['status_message']))
                         exit(1)
         except KeyError as e:
             logger.error('{} {} order not available'.format(order_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
@@ -388,9 +388,9 @@ def create_orders(CE_Dict, PE_Dict):
                                                                               verify_order['status'],
                                                                               verify_order['status_message']))
                         kiteAPI.pushover('Error: Retrying {} {} order Status: {}, Reason: {}'.format(order_data['PE_Trading_Signal'],
-                                                                                 kite.TRANSACTION_TYPE_BUY,
-                                                                                 verify_order['status'],
-                                                                                 verify_order['status_message']))
+                                                                                                     kite.TRANSACTION_TYPE_BUY,
+                                                                                                     verify_order['status'],
+                                                                                                     verify_order['status_message']))
                         PE_Stoploss_Order = kite.place_order(
                             variety=VARIETY,
                             exchange=EXCHANGE,
@@ -415,9 +415,9 @@ def create_orders(CE_Dict, PE_Dict):
                                                                                      verify_order['status'],
                                                                                      verify_order['status_message']))
                         kiteAPI.pushover('Error: Unable to place {} {} order Status: {}, Reason: {}'.format(order_data['PE_Trading_Signal'],
-                                                                                        kite.TRANSACTION_TYPE_BUY,
-                                                                                        verify_order['status'],
-                                                                                        verify_order['status_message']))
+                                                                                                            kite.TRANSACTION_TYPE_BUY,
+                                                                                                            verify_order['status'],
+                                                                                                            verify_order['status_message']))
                         exit(1)
         except KeyError as e:
             logger.error('{} {} order not available'.format(order_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
@@ -708,8 +708,8 @@ def live_data(order_data):
                                                                                       kite.TRANSACTION_TYPE_BUY,
                                                                                       ce_sl_order['status_message']))
                         kiteAPI.pushover('Error: Unable to modify {} {} order Reason: {}'.format(trade_data['CE_Trading_Signal'],
-                                                                                          kite.TRANSACTION_TYPE_BUY,
-                                                                                          ce_sl_order['status_message']))
+                                                                                                 kite.TRANSACTION_TYPE_BUY,
+                                                                                                 ce_sl_order['status_message']))
                         continue
                 except KeyError as e:
                     logger.error(
@@ -763,8 +763,8 @@ def live_data(order_data):
                                                                                       kite.TRANSACTION_TYPE_BUY,
                                                                                       pe_sl_order['status_message']))
                         kiteAPI.pushover('Error: Unable to modify {} {} order Reason: {}'.format(trade_data['PE_Trading_Signal'],
-                                                                                          kite.TRANSACTION_TYPE_BUY,
-                                                                                          pe_sl_order['status_message']))
+                                                                                                 kite.TRANSACTION_TYPE_BUY,
+                                                                                                 pe_sl_order['status_message']))
                         continue
                 except KeyError as e:
                     logger.error(

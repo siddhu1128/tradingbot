@@ -12,12 +12,20 @@ import datetime
 import dateutil
 import pkg_resources
 import http.client, urllib
+import sqlite3
+import django
+from pathlib import Path
 
 # Load Config file
 config = configparser.ConfigParser()
-config_file = config_file = pkg_resources.resource_filename('config', 'config.ini')
+config_file = pkg_resources.resource_filename('config', 'config.ini')
 # config_file = "/Users/siddhu/IdeaProjects/config.ini"
 config.read(config_file)
+
+# db = sqlite3.connect(f"{Path(__file__).resolve().parent}/db.sqlite3")
+DB_File = f"{Path(__file__).resolve().parent}/db.sqlite3"
+db = sqlite3.connect(DB_File)
+django.setup()
 
 
 class KiteApp:
@@ -181,90 +189,98 @@ def autologin(method=None, profile='default'):
     return kite
 
 
-def getHistoricalData(from_date, to_date, timeframe, signal, exchange, profile='default'):
+def getHistoricalData(from_date, to_date, timeframe, profile='default'):
     # eg: 2023-05-23, 2023-05-27, minute, BANKNIFTY, NFO-OPT
+
+    import backtest.models as backtest_models
     # Autologin
-    kite = autologin('enctoken', profile)
-    # get dump of all NSE instruments
-    instrument_dump = kite.instruments()
-    instrument_df = pd.DataFrame(instrument_dump)
-    fut_df = instrument_df[instrument_df["segment"] == exchange.upper()]
-    nse_df = pd.DataFrame(kite.instruments('NSE'))
-    vix_token = nse_df[nse_df.tradingsymbol == 'INDIA VIX'].iloc[0].instrument_token
-    BN_df = fut_df[fut_df.name == signal.upper()]
-    BN_OPT_df = pd.DataFrame()
+    kite = autologin(profile)
+    while True:
+        try:
+            # get dump of all NSE instruments
+            instrument_df = pd.DataFrame(kite.instruments())
+            nse_df = pd.DataFrame(kite.instruments('NSE'))
+            break
+        except kiteconnect.exceptions.DataException:
+            time.sleep(5)
+
     try:
         from_date = datetime.datetime.strptime(str(from_date), '%Y-%m-%d').date()
         to_date = datetime.datetime.strptime(str(to_date), '%Y-%m-%d').date()
     except ValueError as err:
         from_date = datetime.datetime.strptime(str(from_date), '%Y-%m-%d %H:%M:%S')
         to_date = datetime.datetime.strptime(str(to_date), '%Y-%m-%d %H:%M:%S')
+
+    # India Vix
+    vix_token = nse_df[nse_df.tradingsymbol == 'INDIA VIX'].iloc[0].instrument_token
     vix_df = pd.DataFrame(kite.historical_data(vix_token, from_date, to_date, "minute"))
-    vix_df = vix_df.rename(columns={'open': 'vix_open', 'high': 'vix_high', 'low': 'vix_low', 'close': 'vix_close', 'volume': 'vix_volume'})
     vix_df.set_index('date', inplace=True)
-    for index, row in BN_df.iterrows():
-        instrument = row["instrument_token"]
-        data = pd.DataFrame(kite.historical_data(instrument, from_date, to_date, timeframe, oi=True))
-        data["instrument_token"] = row["instrument_token"]
-        data["exchange_token"] = row["exchange_token"]
-        data["tradingsymbol"] = row["tradingsymbol"]
-        data["name"] = row["name"]
-        data["last_price"] = row["last_price"]
-        data["expiry"] = row["expiry"]
-        data["strike"] = row["strike"]
-        data["tick_size"] = row["tick_size"]
-        data["lot_size"] = row["lot_size"]
-        data["instrument_type"] = row["instrument_type"]
-        data["segment"] = row["segment"]
-        data["exchange"] = row["exchange"]
-        # BN_OPT_df = BN_OPT_df.append(data, ignore_index=True)
-        BN_OPT_df = pd.concat([BN_OPT_df, data])
-    try:
+    vix_df.to_sql('IndiaVix', db, if_exists='replace')
+    vix_df = vix_df.rename(columns={'open': 'vix_open', 'high': 'vix_high', 'low': 'vix_low', 'close': 'vix_close',
+                                    'volume': 'vix_volume'})
+
+    # BankNifty Index
+    bn_token = nse_df[nse_df.tradingsymbol == 'NIFTY BANK'].iloc[0].instrument_token
+    bn_df = pd.DataFrame(kite.historical_data(bn_token, from_date, to_date, "minute"))
+    bn_df.set_index('date', inplace=True)
+    bn_df.to_sql('BankniftyIndex', db, if_exists='replace')
+
+    # Nifty Index
+    nf_token = nse_df[nse_df.tradingsymbol == 'NIFTY 50'].iloc[0].instrument_token
+    nf_df = pd.DataFrame(kite.historical_data(nf_token, from_date, to_date, "minute"))
+    nf_df.set_index('date', inplace=True)
+    nf_df.to_sql('NiftyIndex', db, if_exists='replace')
+
+    # FINNifty Index
+    fn_token = nse_df[nse_df.tradingsymbol == 'NIFTY FIN SERVICE'].iloc[0].instrument_token
+    fn_df = pd.DataFrame(kite.historical_data(fn_token, from_date, to_date, "minute"))
+    fn_df.set_index('date', inplace=True)
+    fn_df.to_sql('FinniftyIndex', db, if_exists='replace')
+
+    signals = ['BANKNIFTY', 'NIFTY', 'FINNIFTY']
+    for i in signals:
+        if i == 'BANKNIFTY':
+            signal = 'BANKNIFTY'
+            table = 'BankniftyOptions'
+        elif i == 'NIFTY':
+            signal = 'NIFTY'
+            table = 'NiftyOptions'
+        elif i == 'FINNIFTY':
+            signal = 'FINNIFTY'
+            table = 'FinniftyOptions'
+        # exchange = "NFO-OPT"
+        # fut_df = instrument_df[instrument_df["segment"] == exchange.upper()]
+        # BN_df = fut_df[fut_df.name == signal.upper()]
+        BN_df = instrument_df[instrument_df.name == signal.upper()]
+        BN_OPT_df = pd.DataFrame()
+
+        for index, row in BN_df.iterrows():
+            instrument = row["instrument_token"]
+            data = pd.DataFrame(kite.historical_data(instrument, from_date, to_date, timeframe, oi=True))
+            data["instrument_token"] = row["instrument_token"]
+            data["exchange_token"] = row["exchange_token"]
+            data["tradingsymbol"] = row["tradingsymbol"]
+            data["name"] = row["name"]
+            data["last_price"] = row["last_price"]
+            data["expiry"] = row["expiry"]
+            data["strike"] = row["strike"]
+            data["tick_size"] = row["tick_size"]
+            data["lot_size"] = row["lot_size"]
+            data["instrument_type"] = row["instrument_type"]
+            data["segment"] = row["segment"]
+            data["exchange"] = row["exchange"]
+            BN_OPT_df = pd.concat([BN_OPT_df, data])
         BN_OPT_df.set_index('date', inplace=True)
         BN_OPT_df = BN_OPT_df.sort_values(by='date')
         Final_df = pd.concat([BN_OPT_df, vix_df], axis=1)
-        DUMP_FILE_LOCATION = config.get(profile, 'DATA_FILE_LOCATION')
-        DUMP_FILE = f"{DUMP_FILE_LOCATION}/{signal}_{exchange}_{timeframe}_{datetime.datetime.now().year}.csv"
-        # check if file exists
-        if os.path.isfile(DUMP_FILE):
-            # file exists, append the DataFrame to it
-            Final_df.to_csv(DUMP_FILE, mode='a')
-        else:
-            # file does not exist, create it and write the DataFrame to it
-            Final_df.to_csv(DUMP_FILE)
-    except KeyError as err:
-        # Data not available or Empty dataframe
-        pass
+        Final_df.to_sql(table, db, if_exists='replace')
 
 
-def scheduleHistoricalDump(signal, exchange, timeframe, profile='default'):
-    DUMP_FILE_LOCATION = config.get(profile, 'DATA_FILE_LOCATION')
-    DUMP_FILE = f"{DUMP_FILE_LOCATION}/{signal}_{exchange}_{timeframe}_{datetime.datetime.now().year}.csv"
-    # check if file exists
-    if not os.path.isfile(DUMP_FILE):
-        with open(DUMP_FILE, 'w') as f:
-            pass
-    # Check if given date available in dump file
-    try:
-        dump_df = pd.read_csv(DUMP_FILE)
-        last_row_date = dump_df.iloc[-1]['date']
-        date_format = '%Y-%m-%d %H:%M:%S%z'
-        last_updated_date = datetime.datetime.strptime(last_row_date, date_format).date()
-        today_date = datetime.date.today()
-        if last_updated_date != today_date:
-            start_date = f"{today_date} 09:15:00"
-            end_date = f"{today_date} 15:29:00"
-            getHistoricalData(start_date, end_date, 'minute', 'BANKNIFTY', 'NFO-OPT', profile=profile)
-    except pd.errors.EmptyDataError as err:
-        today_date = datetime.date.today()
-        start_date = f"{today_date} 09:15:00"
-        end_date = f"{today_date} 15:29:00"
-        getHistoricalData(start_date, end_date, 'minute', 'BANKNIFTY', 'NFO-OPT', profile=profile)
-
-
-
-def schedule_banknifty_historical_data():
-    scheduleHistoricalDump('BANKNIFTY', 'NFO-OPT', 'minute', profile='default')
+def schedule_historical_data():
+    today_date = datetime.date.today()
+    start_date = f"{today_date} 09:15:00"
+    end_date = f"{today_date} 15:29:00"
+    getHistoricalData(start_date, end_date, 'minute', profile='default')
 
 
 def getGapPercent(signal, exchange, from_date, to_date, profile='default'):
@@ -285,7 +301,8 @@ def getGapPercent(signal, exchange, from_date, to_date, profile='default'):
 
     # Get the previous day's closing price of BANKNIFTY
     historical_candles = kite.historical_data(instrument_token,
-                                              datetime.datetime.strptime(from_date, date_format).date(), datetime.datetime.strptime(to_date, date_format).date(), "minute")
+                                              datetime.datetime.strptime(from_date, date_format).date(),
+                                              datetime.datetime.strptime(to_date, date_format).date(), "minute")
     historical_df = pd.DataFrame(historical_candles)
     date_df = historical_df['date'].dt.date.drop_duplicates()
     gapPercentDict = {}
@@ -325,3 +342,5 @@ def pushover(message, profile='default'):
 #                   'NFO-OPT', profile='default')
 
 # getGapPercent('INDIA VIX', 'NSE', '2023-04-05', '2023-05-09', profile='default')
+
+schedule_historical_data()

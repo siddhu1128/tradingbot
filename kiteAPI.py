@@ -192,7 +192,6 @@ def autologin(method=None, profile='default'):
 def getHistoricalData(from_date, to_date, timeframe, profile='default'):
     # eg: 2023-05-23, 2023-05-27, minute, BANKNIFTY, NFO-OPT
 
-    import backtest.models as backtest_models
     # Autologin
     kite = autologin(profile)
     while True:

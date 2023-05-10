@@ -129,7 +129,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'scheduleBankNiftyHistoricalData = tradingbot.kiteAPI:schedule_banknifty_historical_data'
+            'scheduleBankNiftyHistoricalData = kiteAPI:schedule_banknifty_historical_data'
         ]
     }
 )

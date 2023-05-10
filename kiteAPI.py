@@ -189,6 +189,8 @@ def getHistoricalData(from_date, to_date, timeframe, signal, exchange, profile='
     instrument_dump = kite.instruments()
     instrument_df = pd.DataFrame(instrument_dump)
     fut_df = instrument_df[instrument_df["segment"] == exchange.upper()]
+    nse_df = pd.DataFrame(kite.instruments('NSE'))
+    vix_token = nse_df[nse_df.tradingsymbol == 'INDIA VIX'].iloc[0].instrument_token
     BN_df = fut_df[fut_df.name == signal.upper()]
     BN_OPT_df = pd.DataFrame()
     try:
@@ -197,6 +199,9 @@ def getHistoricalData(from_date, to_date, timeframe, signal, exchange, profile='
     except ValueError as err:
         from_date = datetime.datetime.strptime(str(from_date), '%Y-%m-%d %H:%M:%S')
         to_date = datetime.datetime.strptime(str(to_date), '%Y-%m-%d %H:%M:%S')
+    vix_df = pd.DataFrame(kite.historical_data(vix_token, from_date, to_date, "minute"))
+    vix_df = vix_df.rename(columns={'open': 'vix_open', 'high': 'vix_high', 'low': 'vix_low', 'close': 'vix_close', 'volume': 'vix_volume'})
+    vix_df.set_index('date', inplace=True)
     for index, row in BN_df.iterrows():
         instrument = row["instrument_token"]
         data = pd.DataFrame(kite.historical_data(instrument, from_date, to_date, timeframe, oi=True))
@@ -217,15 +222,16 @@ def getHistoricalData(from_date, to_date, timeframe, signal, exchange, profile='
     try:
         BN_OPT_df.set_index('date', inplace=True)
         BN_OPT_df = BN_OPT_df.sort_values(by='date')
+        Final_df = pd.concat([BN_OPT_df, vix_df], axis=1)
         DUMP_FILE_LOCATION = config.get(profile, 'DATA_FILE_LOCATION')
         DUMP_FILE = f"{DUMP_FILE_LOCATION}/{signal}_{exchange}_{timeframe}_{datetime.datetime.now().year}.csv"
         # check if file exists
         if os.path.isfile(DUMP_FILE):
             # file exists, append the DataFrame to it
-            BN_OPT_df.to_csv(DUMP_FILE, mode='a')
+            Final_df.to_csv(DUMP_FILE, mode='a')
         else:
             # file does not exist, create it and write the DataFrame to it
-            BN_OPT_df.to_csv(DUMP_FILE)
+            Final_df.to_csv(DUMP_FILE)
     except KeyError as err:
         # Data not available or Empty dataframe
         pass
@@ -244,14 +250,17 @@ def scheduleHistoricalDump(signal, exchange, timeframe, profile='default'):
         last_row_date = dump_df.iloc[-1]['date']
         date_format = '%Y-%m-%d %H:%M:%S%z'
         last_updated_date = datetime.datetime.strptime(last_row_date, date_format).date()
+        today_date = datetime.date.today()
+        if last_updated_date != today_date:
+            start_date = f"{today_date} 09:15:00"
+            end_date = f"{today_date} 15:29:00"
+            getHistoricalData(start_date, end_date, 'minute', 'BANKNIFTY', 'NFO-OPT', profile=profile)
     except pd.errors.EmptyDataError as err:
-        pass
-    # check if last record is not today
-    today_date = datetime.date.today()
-    if last_updated_date != today_date:
+        today_date = datetime.date.today()
         start_date = f"{today_date} 09:15:00"
         end_date = f"{today_date} 15:29:00"
         getHistoricalData(start_date, end_date, 'minute', 'BANKNIFTY', 'NFO-OPT', profile=profile)
+
 
 
 def schedule_banknifty_historical_data():

@@ -168,7 +168,7 @@ def create_orders(CE_Dict, PE_Dict):
                                                                                     verify_order['status'],
                                                                                  verify_order['status_message']))
                 retry = 0
-                while verify_order['status'] != kite.STATUS_COMPLETE:
+                while verify_order['status'] != kite.STATUS_COMPLETE and verify_order['status'] != 'PENDING':
                     if retry <= 2:
                         CE_Order = kite.place_order(
                             variety=VARIETY,
@@ -243,7 +243,7 @@ def create_orders(CE_Dict, PE_Dict):
                                                                                 verify_order['status'],
                                                                                  verify_order['status_message']))
                 retry = 0
-                while verify_order['status'] != kite.STATUS_COMPLETE:
+                while verify_order['status'] != kite.STATUS_COMPLETE and verify_order['status'] != 'PENDING':
                     if retry <= 2:
                         PE_Order = kite.place_order(
                             variety=VARIETY,

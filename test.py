@@ -9,7 +9,7 @@ config.read(config_file)
 
 # kiteAPI.pushover('Test Notification')
 print(config_file)
-print(int(config.get('default', 'STOPLOSS')))
+print(config.get('default', 'DB_FILE'))
 
 
 verify_order = {}

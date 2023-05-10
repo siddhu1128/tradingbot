@@ -41,4 +41,4 @@ def short_straddle(signal, timeframe='minute', exchange='NFO-OPT',
             print("Dump file not available")
             exit(1)
 
-short_straddle('BANKNIFTY')
+# short_straddle('BANKNIFTY')

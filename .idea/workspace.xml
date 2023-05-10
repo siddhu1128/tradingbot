@@ -4,12 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8d1597c7-7e3a-4a53-aeb9-54c9d1120327" name="Changes" comment="working build 2">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="8d1597c7-7e3a-4a53-aeb9-54c9d1120327" name="Changes" comment="pushover and order retry">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backtest.py" beforeDir="false" afterPath="$PROJECT_DIR$/backtest.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backtest/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/backtest/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backtest/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/backtest/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kiteAPI.py" beforeDir="false" afterPath="$PROJECT_DIR$/kiteAPI.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/short_straddle.py" beforeDir="false" afterPath="$PROJECT_DIR$/short_straddle.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tradingbot/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/tradingbot/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tradingbot/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/tradingbot/urls.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -128,8 +133,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.kiteAPI" />
         <item itemvalue="Python.test" />
+        <item itemvalue="Python.kiteAPI" />
       </list>
     </recent_temporary>
   </component>
@@ -163,14 +168,22 @@
       <option name="project" value="LOCAL" />
       <updated>1680268916295</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="pushover and order retry">
+      <created>1683624664178</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1683624664178</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
     <MESSAGE value="working build" />
     <MESSAGE value="working build 2" />
-    <option name="LAST_COMMIT_MESSAGE" value="working build 2" />
+    <MESSAGE value="pushover and order retry" />
+    <option name="LAST_COMMIT_MESSAGE" value="pushover and order retry" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -186,9 +199,19 @@
           <option name="timeStamp" value="16" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/kiteAPI.py</url>
+          <line>236</line>
+          <option name="timeStamp" value="47" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/kiteAPI.py</url>
+          <line>203</line>
+          <option name="timeStamp" value="53" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/short_straddle.py</url>
-          <line>821</line>
-          <option name="timeStamp" value="39" />
+          <line>820</line>
+          <option name="timeStamp" value="55" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -201,7 +224,9 @@
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
-        <watch expression="gapPercent" />
+        <watch expression="vix_df" />
+        <watch expression="BN_OPT_df" />
+        <watch expression="nse_df" />
       </configuration>
     </watches-manager>
   </component>

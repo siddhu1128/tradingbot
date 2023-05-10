@@ -11,6 +11,7 @@ import calendar
 import configparser
 import kiteAPI
 import pkg_resources
+import kiteconnect
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dev', action="store_true", default=False)
@@ -479,14 +480,13 @@ def live_data(order_data):
     # Square off all trades at market end time
     while datetime.datetime.strptime(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                      '%Y-%m-%d %H:%M:%S') <= Market_Close_datetime:
-        try:
-            CE_Spot_Dict = kite.ltp(["{}:{}".format(EXCHANGE, trade_data['CE_Trading_Signal'])])
-            PE_Spot_Dict = kite.ltp(["{}:{}".format(EXCHANGE, trade_data['PE_Trading_Signal'])])
-        except Exception as e:
-            logger.warning('Unable to fetch LTP prices Retrying...!!!')
-            time.sleep(5)
-            CE_Spot_Dict = kite.ltp(["{}:{}".format(EXCHANGE, trade_data['CE_Trading_Signal'])])
-            PE_Spot_Dict = kite.ltp(["{}:{}".format(EXCHANGE, trade_data['PE_Trading_Signal'])])
+        while True:
+            try:
+                CE_Spot_Dict = kite.ltp(["{}:{}".format(EXCHANGE, trade_data['CE_Trading_Signal'])])
+                PE_Spot_Dict = kite.ltp(["{}:{}".format(EXCHANGE, trade_data['PE_Trading_Signal'])])
+                break
+            except kiteconnect.exceptions.DataException:
+                time.sleep(5)
         trade_data['CE_Spot_Price'] = CE_Spot_Dict["{}:{}".format(EXCHANGE, trade_data['CE_Trading_Signal'])][
             'last_price']
         trade_data['PE_Spot_Price'] = PE_Spot_Dict["{}:{}".format(EXCHANGE, trade_data['PE_Trading_Signal'])][

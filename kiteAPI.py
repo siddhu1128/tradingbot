@@ -215,6 +215,7 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
     vix_df = pd.DataFrame(kite.historical_data(vix_token, from_date, to_date, "minute"))
     vix_df.set_index('date', inplace=True)
     vix_df.to_sql('backtest_indiavix', db, if_exists='replace')
+    print(f"India VIX Historical Data collected succesfullly...!!!")
     vix_df = vix_df.rename(columns={'open': 'vix_open', 'high': 'vix_high', 'low': 'vix_low', 'close': 'vix_close',
                                     'volume': 'vix_volume'})
 
@@ -223,18 +224,21 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
     bn_df = pd.DataFrame(kite.historical_data(bn_token, from_date, to_date, "minute"))
     bn_df.set_index('date', inplace=True)
     bn_df.to_sql('backtest_bankniftyindex', db, if_exists='replace')
+    print(f"Banknifty Index Historical Data collected succesfullly...!!!")
 
     # Nifty Index
     nf_token = nse_df[nse_df.tradingsymbol == 'NIFTY 50'].iloc[0].instrument_token
     nf_df = pd.DataFrame(kite.historical_data(nf_token, from_date, to_date, "minute"))
     nf_df.set_index('date', inplace=True)
     nf_df.to_sql('backtest_niftyindex', db, if_exists='replace')
+    print(f"Nifty Index Historical Data collected succesfullly...!!!")
 
     # FINNifty Index
     fn_token = nse_df[nse_df.tradingsymbol == 'NIFTY FIN SERVICE'].iloc[0].instrument_token
     fn_df = pd.DataFrame(kite.historical_data(fn_token, from_date, to_date, "minute"))
     fn_df.set_index('date', inplace=True)
     fn_df.to_sql('backtest_finniftyindex', db, if_exists='replace')
+    print(f"Finnifty Index Historical Data collected succesfullly...!!!")
 
     signals = ['BANKNIFTY', 'NIFTY', 'FINNIFTY']
     for i in signals:
@@ -273,6 +277,7 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
         BN_OPT_df = BN_OPT_df.sort_values(by='date')
         Final_df = pd.concat([BN_OPT_df, vix_df], axis=1)
         Final_df.to_sql(table, db, if_exists='replace')
+        print(f"{signal} Options Historical Data collected succesfullly...!!!")
 
 
 def schedule_historical_data():

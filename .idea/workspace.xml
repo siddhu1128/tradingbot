@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8d1597c7-7e3a-4a53-aeb9-54c9d1120327" name="Changes" comment="fixed bugs 4">
+    <list default="true" id="8d1597c7-7e3a-4a53-aeb9-54c9d1120327" name="Changes" comment="Added print for historical data">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kiteAPI.py" beforeDir="false" afterPath="$PROJECT_DIR$/kiteAPI.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tradingbot/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/tradingbot/settings.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -218,7 +218,14 @@
       <option name="project" value="LOCAL" />
       <updated>1683746547296</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="Added print for historical data">
+      <created>1683746937187</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1683746937187</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -231,7 +238,8 @@
     <MESSAGE value="fixed bugs 2" />
     <MESSAGE value="fixed bugs 3" />
     <MESSAGE value="fixed bugs 4" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed bugs 4" />
+    <MESSAGE value="Added print for historical data" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added print for historical data" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

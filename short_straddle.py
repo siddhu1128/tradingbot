@@ -153,6 +153,7 @@ def create_orders(CE_Dict, PE_Dict):
             price=PRICE,
             tag=TAG
         )
+        time.sleep(10)
         order_data['CE_Order_Id'] = CE_Order
         verify_order = verifyOrder(order_data['CE_Order_Id'])
         try:
@@ -184,6 +185,7 @@ def create_orders(CE_Dict, PE_Dict):
                             price=PRICE,
                             tag=TAG
                         )
+                        time.sleep(10)
                         order_data['CE_Order_Id'] = CE_Order
                         verify_order = verifyOrder(order_data['CE_Order_Id'])
                         if verify_order['status'] == kite.STATUS_COMPLETE:
@@ -228,6 +230,7 @@ def create_orders(CE_Dict, PE_Dict):
             order_type=kite.ORDER_TYPE_MARKET,
             tag="TradingPot"
         )
+        time.sleep(10)
         order_data['PE_Order_Id'] = PE_Order
         verify_order = verifyOrder(order_data['PE_Order_Id'])
         try:
@@ -258,6 +261,7 @@ def create_orders(CE_Dict, PE_Dict):
                             order_type=kite.ORDER_TYPE_MARKET,
                             tag="TradingPot"
                         )
+                        time.sleep(10)
                         order_data['PE_Order_Id'] = PE_Order
                         verify_order = verifyOrder(order_data['PE_Order_Id'])
                         if verify_order['status'] == kite.STATUS_COMPLETE:
@@ -310,7 +314,7 @@ def create_orders(CE_Dict, PE_Dict):
                     int(order_data['CE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE,
             tag="TradingPot"
         )
-
+        time.sleep(10)
         order_data['CE_Stoploss_Order_Id'] = CE_Stoploss_Order
         verify_order = verifyOrder(order_data['CE_Stoploss_Order_Id'])
         try:
@@ -342,6 +346,7 @@ def create_orders(CE_Dict, PE_Dict):
                                     int(order_data['CE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE,
                             tag="TradingPot"
                         )
+                        time.sleep(10)
                         order_data['CE_Stoploss_Order_Id'] = CE_Stoploss_Order
                         verify_order = verifyOrder(order_data['CE_Stoploss_Order_Id'])
                         retry += 1
@@ -374,7 +379,7 @@ def create_orders(CE_Dict, PE_Dict):
                     int(order_data['PE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE,
             tag="TradingPot"
         )
-
+        time.sleep(10)
         order_data['PE_Stoploss_Order_Id'] = PE_Stoploss_Order
         verify_order = verifyOrder(order_data['PE_Stoploss_Order_Id'])
         try:
@@ -406,7 +411,7 @@ def create_orders(CE_Dict, PE_Dict):
                                     int(order_data['PE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE,
                             tag="TradingPot"
                         )
-
+                        time.sleep(10)
                         order_data['PE_Stoploss_Order_Id'] = PE_Stoploss_Order
                         verify_order = verifyOrder(order_data['PE_Stoploss_Order_Id'])
                         retry += 1

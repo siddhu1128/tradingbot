@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8d1597c7-7e3a-4a53-aeb9-54c9d1120327" name="Changes" comment="fixed bugs">
+    <list default="true" id="8d1597c7-7e3a-4a53-aeb9-54c9d1120327" name="Changes" comment="fixed order bugs">
       <change beforePath="$PROJECT_DIR$/short_straddle.py" beforeDir="false" afterPath="$PROJECT_DIR$/short_straddle.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -238,7 +238,14 @@
       <option name="project" value="LOCAL" />
       <updated>1683781721937</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="fixed order bugs">
+      <created>1683782162951</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1683782162951</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -253,7 +260,8 @@
     <MESSAGE value="Added print for historical data" />
     <MESSAGE value="allowed hosts" />
     <MESSAGE value="fixed bugs" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed bugs" />
+    <MESSAGE value="fixed order bugs" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed order bugs" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -265,12 +273,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/short_straddle.py</url>
-          <line>825</line>
+          <line>830</line>
           <option name="timeStamp" value="16" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/short_straddle.py</url>
-          <line>822</line>
+          <line>827</line>
           <option name="timeStamp" value="55" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">

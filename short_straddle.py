@@ -45,6 +45,8 @@ else:
     swp_file = "{}/{}.json".format(log_path, str(datetime.date.today()))
 
 # Set up the logger
+logging.Formatter.converter = time.localtime
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 

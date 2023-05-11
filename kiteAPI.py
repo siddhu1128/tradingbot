@@ -13,7 +13,7 @@ import dateutil
 import pkg_resources
 import http.client, urllib
 import sqlite3
-import django
+# import django
 from pathlib import Path
 
 # Load Config file
@@ -25,7 +25,7 @@ config.read(config_file)
 # db = sqlite3.connect(f"{Path(__file__).resolve().parent}/db.sqlite3")
 DB_File = f"{Path(__file__).resolve().parent}/db.sqlite3"
 db = sqlite3.connect(DB_File)
-django.setup()
+# django.setup()
 
 
 class KiteApp:

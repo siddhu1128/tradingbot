@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8d1597c7-7e3a-4a53-aeb9-54c9d1120327" name="Changes" comment="Added print for historical data">
+    <list default="true" id="8d1597c7-7e3a-4a53-aeb9-54c9d1120327" name="Changes" comment="allowed hosts">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tradingbot/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/tradingbot/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kiteAPI.py" beforeDir="false" afterPath="$PROJECT_DIR$/kiteAPI.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/short_straddle.py" beforeDir="false" afterPath="$PROJECT_DIR$/short_straddle.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,7 +60,7 @@
       <recent name="$PROJECT_DIR$/bin" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.kiteAPI">
+  <component name="RunManager" selected="Python.short_straddle">
     <configuration name="kiteAPI" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="tradingbot" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -225,7 +226,14 @@
       <option name="project" value="LOCAL" />
       <updated>1683746937187</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="allowed hosts">
+      <created>1683747992984</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1683747992984</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -239,7 +247,8 @@
     <MESSAGE value="fixed bugs 3" />
     <MESSAGE value="fixed bugs 4" />
     <MESSAGE value="Added print for historical data" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added print for historical data" />
+    <MESSAGE value="allowed hosts" />
+    <option name="LAST_COMMIT_MESSAGE" value="allowed hosts" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -251,12 +260,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/short_straddle.py</url>
-          <line>823</line>
+          <line>825</line>
           <option name="timeStamp" value="16" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/short_straddle.py</url>
-          <line>820</line>
+          <line>822</line>
           <option name="timeStamp" value="55" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">

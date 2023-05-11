@@ -1,6 +1,20 @@
 from django.db import models
 
 
+# from django.apps import AppConfig
+#
+#
+# class BacktestConfig(AppConfig):
+#     default_auto_field = 'django.db.models.BigAutoField'
+#     name = 'backtest'
+#
+#     def ready(self):
+#         from . import models  # Importing here to avoid circular imports
+#
+#         # Call your function or method that accesses the app registry here
+#         models.do_something()
+
+
 # Create your models here.
 class BankniftyOptions(models.Model):
     # date,instrument_token,exchange_token,tradingsymbol,name,last_price,expiry,strike,tick_size,lot_size,instrument_type,segment,exchange,open,high,low,close,volume,oi,vix_open,vix_high,vix_low,vix_close,vix_volume
@@ -29,6 +43,9 @@ class BankniftyOptions(models.Model):
     vix_close = models.FloatField()
     vix_volume = models.IntegerField()
 
+    class Meta:
+        app_label = 'backtest'
+
 
 class BankniftyIndex(models.Model):
     date = models.DateTimeField()
@@ -37,6 +54,9 @@ class BankniftyIndex(models.Model):
     low = models.FloatField()
     close = models.FloatField()
     volume = models.IntegerField()
+
+    class Meta:
+        app_label = 'backtest'
 
 
 class NiftyOptions(models.Model):
@@ -66,6 +86,9 @@ class NiftyOptions(models.Model):
     vix_close = models.FloatField()
     vix_volume = models.IntegerField()
 
+    class Meta:
+        app_label = 'backtest'
+
 
 class NiftyIndex(models.Model):
     date = models.DateTimeField()
@@ -74,6 +97,9 @@ class NiftyIndex(models.Model):
     low = models.FloatField()
     close = models.FloatField()
     volume = models.IntegerField()
+
+    class Meta:
+        app_label = 'backtest'
 
 
 class FinniftyOptions(models.Model):
@@ -103,6 +129,9 @@ class FinniftyOptions(models.Model):
     vix_close = models.FloatField()
     vix_volume = models.IntegerField()
 
+    class Meta:
+        app_label = 'backtest'
+
 
 class FinniftyIndex(models.Model):
     date = models.DateTimeField()
@@ -111,6 +140,9 @@ class FinniftyIndex(models.Model):
     low = models.FloatField()
     close = models.FloatField()
     volume = models.IntegerField()
+
+    class Meta:
+        app_label = 'backtest'
 
 
 class IndiaVix(models.Model):
@@ -121,5 +153,6 @@ class IndiaVix(models.Model):
     close = models.FloatField()
     volume = models.IntegerField()
 
-
-
+    class Meta:
+        app_label = 'backtest'
+        # unique_together = ["date", "open", "high", "low", "close", "volume"]

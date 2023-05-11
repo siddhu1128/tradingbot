@@ -4,8 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8d1597c7-7e3a-4a53-aeb9-54c9d1120327" name="Changes" comment="fixed order bugs">
-      <change beforePath="$PROJECT_DIR$/short_straddle.py" beforeDir="false" afterPath="$PROJECT_DIR$/short_straddle.py" afterDir="false" />
+    <list default="true" id="8d1597c7-7e3a-4a53-aeb9-54c9d1120327" name="Changes" comment="working schedule with mysql">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backtest/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/backtest/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kiteAPI.py" beforeDir="false" afterPath="$PROJECT_DIR$/kiteAPI.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tradingbot/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/tradingbot/settings.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,17 +44,17 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_ADD_EXTERNAL_FILES": "true",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "reference.idesettings.debugger.python"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/templates" />
@@ -58,7 +62,7 @@
       <recent name="$PROJECT_DIR$/bin" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.short_straddle">
+  <component name="RunManager" selected="Python.kiteAPI">
     <configuration name="kiteAPI" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="tradingbot" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -126,7 +130,45 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="Docker Image" type="docker-deploy" factoryName="docker-image" server-name="Docker">
+      <deployment type="docker-image">
+        <settings>
+          <option name="imageTag" value="python:latest" />
+          <option name="attachToContainerNeeded" value="true" />
+          <option name="command" value="setup.py install; python manage.py makemigrations; python manage.py migrate;" />
+          <option name="containerName" value="trading" />
+          <option name="entrypoint" value="python manage.py runserver 0.0.0.0:8000" />
+          <option name="envVars">
+            <list>
+              <DockerEnvVarImpl>
+                <option name="name" value="DJANGO_SETTINGS_MODULE" />
+                <option name="value" value="tradingbot.settings" />
+              </DockerEnvVarImpl>
+            </list>
+          </option>
+          <option name="portBindings">
+            <list>
+              <DockerPortBindingImpl>
+                <option name="containerPort" value="8000" />
+                <option name="hostPort" value="8000" />
+              </DockerPortBindingImpl>
+            </list>
+          </option>
+          <option name="showCommandPreview" value="true" />
+          <option name="volumeBindings">
+            <list>
+              <DockerVolumeBindingImpl>
+                <option name="containerPath" value="/opt/tradingbot" />
+                <option name="hostPath" value="$PROJECT_DIR$" />
+              </DockerVolumeBindingImpl>
+            </list>
+          </option>
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
     <list>
+      <item itemvalue="Docker.Docker Image" />
       <item itemvalue="Python.short_straddle" />
       <item itemvalue="Python.kiteAPI" />
       <item itemvalue="Python.test" />
@@ -245,7 +287,14 @@
       <option name="project" value="LOCAL" />
       <updated>1683782162951</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="fixed order bugs">
+      <created>1683782579666</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1683782579666</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -261,14 +310,15 @@
     <MESSAGE value="allowed hosts" />
     <MESSAGE value="fixed bugs" />
     <MESSAGE value="fixed order bugs" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed order bugs" />
+    <MESSAGE value="working schedule with mysql" />
+    <option name="LAST_COMMIT_MESSAGE" value="working schedule with mysql" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/test.py</url>
-          <line>22</line>
+          <line>21</line>
           <option name="timeStamp" value="14" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -281,11 +331,6 @@
           <line>827</line>
           <option name="timeStamp" value="55" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/kiteAPI.py</url>
-          <line>278</line>
-          <option name="timeStamp" value="73" />
-        </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
@@ -297,9 +342,7 @@
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
-        <watch expression="nse_df" />
-        <watch expression="instrument_df" />
-        <watch expression="instrument" />
+        <watch expression="Final_df" />
       </configuration>
     </watches-manager>
   </component>

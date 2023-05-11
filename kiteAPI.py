@@ -12,21 +12,21 @@ import datetime
 import dateutil
 import pkg_resources
 import http.client, urllib
-import sqlite3
-# import django
-from pathlib import Path
+
+from sqlalchemy import create_engine
+
+import django
+django.setup()
 
 # Load Config file
 config = configparser.ConfigParser()
 config_file = pkg_resources.resource_filename('config', 'config.ini')
-# config_file = "/Users/siddhu/IdeaProjects/config.ini"
 config.read(config_file)
 
-# db = sqlite3.connect(f"{Path(__file__).resolve().parent}/db.sqlite3")
-DB_File = f"{Path(__file__).resolve().parent}/db.sqlite3"
-db = sqlite3.connect(DB_File)
-# django.setup()
+# DB_File = f"{Path(__file__).resolve().parent}/db.sqlite3"
+# db = sqlite3.connect(DB_File)
 
+engine = create_engine(f'mysql+mysqlconnector://{config.get("default", "DB_USER")}:{config.get("default", "DB_PASSWORD").replace("@", "%40")}@{config.get("default", "DB_HOST")}:{config.get("default", "DB_PORT")}/{config.get("default", "DB_NAME")}')
 
 class KiteApp:
     # Products
@@ -212,32 +212,36 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
 
     # India Vix
     vix_token = nse_df[nse_df.tradingsymbol == 'INDIA VIX'].iloc[0].instrument_token
-    vix_df = pd.DataFrame(kite.historical_data(vix_token, from_date, to_date, "minute"))
+    vix_dict = kite.historical_data(vix_token, from_date, to_date, "minute")
+    vix_df = pd.DataFrame(vix_dict)
+    vix_df.to_sql('backtest_indiavix', con=engine, if_exists='replace', index=False)
     vix_df.set_index('date', inplace=True)
-    vix_df.to_sql('backtest_indiavix', db, if_exists='replace')
     print(f"India VIX Historical Data collected succesfullly...!!!")
     vix_df = vix_df.rename(columns={'open': 'vix_open', 'high': 'vix_high', 'low': 'vix_low', 'close': 'vix_close',
                                     'volume': 'vix_volume'})
 
     # BankNifty Index
     bn_token = nse_df[nse_df.tradingsymbol == 'NIFTY BANK'].iloc[0].instrument_token
-    bn_df = pd.DataFrame(kite.historical_data(bn_token, from_date, to_date, "minute"))
+    bn_dict = kite.historical_data(bn_token, from_date, to_date, "minute")
+    bn_df = pd.DataFrame(bn_dict)
+    bn_df.to_sql('backtest_bankniftyindex', con=engine, if_exists='replace', index=False)
     bn_df.set_index('date', inplace=True)
-    bn_df.to_sql('backtest_bankniftyindex', db, if_exists='replace')
     print(f"Banknifty Index Historical Data collected succesfullly...!!!")
 
     # Nifty Index
     nf_token = nse_df[nse_df.tradingsymbol == 'NIFTY 50'].iloc[0].instrument_token
-    nf_df = pd.DataFrame(kite.historical_data(nf_token, from_date, to_date, "minute"))
+    nf_dict = kite.historical_data(nf_token, from_date, to_date, "minute")
+    nf_df = pd.DataFrame(nf_dict)
+    nf_df.to_sql('backtest_niftyindex', con=engine, if_exists='replace', index=False)
     nf_df.set_index('date', inplace=True)
-    nf_df.to_sql('backtest_niftyindex', db, if_exists='replace')
     print(f"Nifty Index Historical Data collected succesfullly...!!!")
 
     # FINNifty Index
     fn_token = nse_df[nse_df.tradingsymbol == 'NIFTY FIN SERVICE'].iloc[0].instrument_token
-    fn_df = pd.DataFrame(kite.historical_data(fn_token, from_date, to_date, "minute"))
+    fn_dict = kite.historical_data(fn_token, from_date, to_date, "minute")
+    fn_df = pd.DataFrame(fn_dict)
+    fn_df.to_sql('backtest_finniftyindex', con=engine, if_exists='replace', index=False)
     fn_df.set_index('date', inplace=True)
-    fn_df.to_sql('backtest_finniftyindex', db, if_exists='replace')
     print(f"Finnifty Index Historical Data collected succesfullly...!!!")
 
     signals = ['BANKNIFTY', 'NIFTY', 'FINNIFTY']
@@ -275,8 +279,8 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
             BN_OPT_df = pd.concat([BN_OPT_df, data])
         BN_OPT_df.set_index('date', inplace=True)
         BN_OPT_df = BN_OPT_df.sort_values(by='date')
-        Final_df = pd.concat([BN_OPT_df, vix_df], axis=1)
-        Final_df.to_sql(table, db, if_exists='replace')
+        Final_df = pd.concat([BN_OPT_df, vix_df], axis=1).reset_index()
+        Final_df.to_sql(table, con=engine, if_exists='replace', index=False)
         print(f"{signal} Options Historical Data collected succesfullly...!!!")
 
 

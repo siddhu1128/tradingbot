@@ -116,7 +116,9 @@ setup(
         'pyasn1==0.4.6',
         'cryptography>=38.0.0,<41.0.0',
         'attrs',
-        'django'
+        'django',
+        'mysql-connector-python',
+        'sqlalchemy'
     ],
     # Use data_files in code with below code
     # config_file = os.path.join(os.path.dirname(__file__), 'config', 'config.ini')

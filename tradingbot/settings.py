@@ -14,6 +14,9 @@ from pathlib import Path
 import os
 import configparser
 import pkg_resources
+# import django
+#
+# django.setup()
 
 config = configparser.ConfigParser()
 config_file = pkg_resources.resource_filename('config', 'config.ini')
@@ -81,11 +84,25 @@ WSGI_APPLICATION = 'tradingbot.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         # 'NAME': BASE_DIR / 'db.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#         'OPTIONS': {
+#             'timeout': 30,
+#         },
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        # 'NAME': BASE_DIR / 'db.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'mysql.connector.django',
+        'NAME': config.get('default', 'DB_NAME'),
+        'USER': config.get('default', 'DB_USER'),
+        'PASSWORD': config.get('default', 'DB_PASSWORD'),
+        'HOST': config.get('default', 'DB_HOST'),
+        'PORT': config.get('default', 'DB_PORT'),
     }
 }
 

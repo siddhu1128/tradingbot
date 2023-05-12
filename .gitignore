@@ -8,7 +8,7 @@ __pycache__/
 
 # DB files
 db.*
-
+bak.*
 # Distribution / packaging
 .Python
 config/config.ini

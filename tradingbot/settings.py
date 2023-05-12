@@ -97,7 +97,7 @@ WSGI_APPLICATION = 'tradingbot.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'mysql.connector.django',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': config.get('default', 'DB_NAME'),
         'USER': config.get('default', 'DB_USER'),
         'PASSWORD': config.get('default', 'DB_PASSWORD'),

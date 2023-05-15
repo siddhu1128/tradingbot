@@ -13,6 +13,9 @@ import kiteAPI
 import pkg_resources
 import kiteconnect
 
+os.environ['TZ'] = 'Asia/Kolkata'
+time.tzset()
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--dev', action="store_true", default=False)
 parser.add_argument('--continue', dest='continueTrade', action="store_true", default=False)
@@ -44,8 +47,6 @@ else:
     log_file_path = "{}/{}.log".format(log_path, str(datetime.date.today()))
     swp_file = "{}/{}.json".format(log_path, str(datetime.date.today()))
 
-# Set up the logger
-logging.Formatter.converter = time.localtime
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -58,6 +59,9 @@ handler.setLevel(logging.DEBUG)
 
 # Create a formatter for the log messages
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+# Set up the logger
+logging.Formatter.converter = time.localtime
 
 # Set the formatter for the handler
 handler.setFormatter(formatter)
@@ -481,7 +485,7 @@ def live_data(order_data):
         trade_data['PE_TRAILING_STOPLOSS_PRICE'] = round((int(order_data['PE_AVG_Price']) - (
                 int(order_data['PE_AVG_Price']) * (
                 int(TRAILING_STOPLOSS.split(':')[0]) / 100))) / TICK_SIZE) * TICK_SIZE
-    Market_Close_datetime = datetime.datetime.strptime('{} {}'.format(str(datetime.date.today()), '15:15:00'),
+    Market_Close_datetime = datetime.datetime.strptime('{} {}'.format(str(datetime.date.today()), '15:10:00'),
                                                        '%Y-%m-%d %H:%M:%S')
 
     # Square off all trades at market end time
@@ -801,6 +805,7 @@ def live_data(order_data):
             2)
         if trade_data['max_profit'] < round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2):
             trade_data['max_profit'] = round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2)
+            trade_data['max_profit_time'] = str(datetime.datetime.now().time()).split('.')[0]
         logger.info("{} ENTRY_TIME: {}, AVG_PRICE: {}, SL: {}, TSL: {}, LTP: {}, Exit_Price: {}, PnL: {}".format(
             trade_data['CE_Trading_Signal'], trade_data['CE_Entry_Time'], round(trade_data['CE_AVG_Price'], 2),
             round(trade_data['CE_Stoploss_Price'], 2), round(trade_data['CE_TRAILING_STOPLOSS_PRICE'], 2),
@@ -813,8 +818,8 @@ def live_data(order_data):
             round(trade_data['PE_Spot_Price'], 2),
             trade_data['pe_exit_price'],
             round(trade_data['PE_PnL'], 2)))
-        logger.info('Total PnL: {}, Max_profit: {}'.format(round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2),
-                                                           trade_data['max_profit']))
+        logger.info('Total PnL: {}, Max_profit: {}, Max_profit_time: {}'.format(round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2),
+                                                           trade_data['max_profit'], trade_data['max_profit_time']))
         with open(swp_file, "w") as outfile:
             json.dump(trade_data, outfile)
         time.sleep(5)
@@ -956,7 +961,7 @@ intraday_log = pd.DataFrame(
              'CE_TSL_Hits', 'CE_Exit_Price', 'CE_Exit_Time', 'CE_pnl',
              'PE_Entry_Time', 'PE_Entry_Price', 'PE_Quantity', 'PE_Order_Id', 'PE_Stoploss_Order_Id', 'PE_SL_Hit',
              'PE_TSL_Hits', 'PE_Exit_Price', 'PE_Exit_Time', 'PE_pnl',
-             'Total_pnl', 'Win/Loss', 'max_profit'
+             'Total_pnl', 'Win/Loss', 'max_profit', 'max_profit_time'
              # 'CE_max_profit', 'CE_max_loss', 'PE_max_profit', 'PE_max_loss'
              ])
 
@@ -1035,7 +1040,9 @@ record = [
             order_data['PE_AVG_Price'] - trade_data[
         'pe_exit_price']) * QUANTITY]) > 0 else 'loss') if trade_data.get('ce_exit_price') is not None else None,
     # max_profit
-    trade_data['max_profit']
+    trade_data['max_profit'],
+    # max_profit_time
+    trade_data['max_profit_time']
     # 'CE_max_profit'
     # (CE_AVG_Price - CE_Min_Price) * QUANTITY,
     # # 'CE_max_loss'

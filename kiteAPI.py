@@ -2,6 +2,7 @@ import configparser
 import os
 import time
 
+import mysql.connector
 import requests
 from pyotp import TOTP
 from kiteconnect import KiteConnect
@@ -18,6 +19,9 @@ from sqlalchemy import create_engine
 import django
 django.setup()
 
+os.environ['TZ'] = 'Asia/Kolkata'
+time.tzset()
+
 # Load Config file
 config = configparser.ConfigParser()
 config_file = pkg_resources.resource_filename('config', 'config.ini')
@@ -26,7 +30,8 @@ config.read(config_file)
 # DB_File = f"{Path(__file__).resolve().parent}/db.sqlite3"
 # db = sqlite3.connect(DB_File)
 
-engine = create_engine(f'mysql+mysqlconnector://{config.get("default", "DB_USER")}:{config.get("default", "DB_PASSWORD").replace("@", "%40")}@{config.get("default", "DB_HOST")}:{config.get("default", "DB_PORT")}/{config.get("default", "DB_NAME")}')
+# engine = create_engine(f'mysql+mysqlconnector://{config.get("default", "DB_USER")}:{config.get("default", "DB_PASSWORD").replace("@", "%40")}@{config.get("default", "DB_HOST")}:{config.get("default", "DB_PORT")}/{config.get("default", "DB_NAME")}')
+engine = mysql.connector.Connect(host=f"{config.get('default', 'DB_HOST')}", user=f"{config.get('default', 'DB_USER')}", password=f"{config.get('default', 'DB_PASSWORD')}", database=f"{config.get('default', 'DB_NAME')}")
 
 class KiteApp:
     # Products

@@ -30,8 +30,7 @@ config.read(config_file)
 # DB_File = f"{Path(__file__).resolve().parent}/db.sqlite3"
 # db = sqlite3.connect(DB_File)
 
-# engine = create_engine(f'mysql+mysqlconnector://{config.get("default", "DB_USER")}:{config.get("default", "DB_PASSWORD").replace("@", "%40")}@{config.get("default", "DB_HOST")}:{config.get("default", "DB_PORT")}/{config.get("default", "DB_NAME")}')
-engine = mysql.connector.Connect(host=f"{config.get('default', 'DB_HOST')}", user=f"{config.get('default', 'DB_USER')}", password=f"{config.get('default', 'DB_PASSWORD')}", database=f"{config.get('default', 'DB_NAME')}")
+engine = create_engine(f'mysql+mysqlconnector://{config.get("default", "DB_USER")}:{config.get("default", "DB_PASSWORD").replace("@", "%40")}@{config.get("default", "DB_HOST")}:{config.get("default", "DB_PORT")}/{config.get("default", "DB_NAME")}')
 
 class KiteApp:
     # Products
@@ -268,20 +267,26 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
 
         for index, row in BN_df.iterrows():
             instrument = row["instrument_token"]
-            data = pd.DataFrame(kite.historical_data(instrument, from_date, to_date, timeframe, oi=True))
-            data["instrument_token"] = row["instrument_token"]
-            data["exchange_token"] = row["exchange_token"]
-            data["tradingsymbol"] = row["tradingsymbol"]
-            data["name"] = row["name"]
-            data["last_price"] = row["last_price"]
-            data["expiry"] = row["expiry"]
-            data["strike"] = row["strike"]
-            data["tick_size"] = row["tick_size"]
-            data["lot_size"] = row["lot_size"]
-            data["instrument_type"] = row["instrument_type"]
-            data["segment"] = row["segment"]
-            data["exchange"] = row["exchange"]
-            BN_OPT_df = pd.concat([BN_OPT_df, data])
+            while True:
+                try:
+                    data = pd.DataFrame(kite.historical_data(instrument, from_date, to_date, timeframe, oi=True))
+                    data["instrument_token"] = row["instrument_token"]
+                    data["exchange_token"] = row["exchange_token"]
+                    data["tradingsymbol"] = row["tradingsymbol"]
+                    data["name"] = row["name"]
+                    data["last_price"] = row["last_price"]
+                    data["expiry"] = row["expiry"]
+                    data["strike"] = row["strike"]
+                    data["tick_size"] = row["tick_size"]
+                    data["lot_size"] = row["lot_size"]
+                    data["instrument_type"] = row["instrument_type"]
+                    data["segment"] = row["segment"]
+                    data["exchange"] = row["exchange"]
+                    BN_OPT_df = pd.concat([BN_OPT_df, data])
+                    break
+                except kiteconnect.exceptions.NetworkException:
+                    time.sleep(60)
+
         BN_OPT_df.set_index('date', inplace=True)
         BN_OPT_df = BN_OPT_df.sort_values(by='date')
         Final_df = pd.concat([BN_OPT_df, vix_df], axis=1).reset_index()

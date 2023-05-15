@@ -16,8 +16,8 @@ import http.client, urllib
 
 from sqlalchemy import create_engine
 
-import django
-django.setup()
+# import django
+# django.setup()
 
 os.environ['TZ'] = 'Asia/Kolkata'
 time.tzset()

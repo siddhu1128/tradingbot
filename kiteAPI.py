@@ -285,6 +285,7 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
                     BN_OPT_df = pd.concat([BN_OPT_df, data])
                     break
                 except kiteconnect.exceptions.NetworkException:
+                    print('Sleeping...!!!')
                     time.sleep(60)
 
         BN_OPT_df.set_index('date', inplace=True)

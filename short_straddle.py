@@ -485,7 +485,7 @@ def live_data(order_data):
         trade_data['PE_TRAILING_STOPLOSS_PRICE'] = round((int(order_data['PE_AVG_Price']) - (
                 int(order_data['PE_AVG_Price']) * (
                 int(TRAILING_STOPLOSS.split(':')[0]) / 100))) / TICK_SIZE) * TICK_SIZE
-    Market_Close_datetime = datetime.datetime.strptime('{} {}'.format(str(datetime.date.today()), '15:10:00'),
+    Market_Close_datetime = datetime.datetime.strptime('{} {}'.format(str(datetime.date.today()), '15:15:00'),
                                                        '%Y-%m-%d %H:%M:%S')
 
     # Square off all trades at market end time
@@ -542,7 +542,7 @@ def live_data(order_data):
                 kiteAPI.pushover('Error: {} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
             print('pe_exit_price: {}'.format(trade_data['pe_exit_price']))
         # Break if both orders have exit price
-        if (trade_data.get('ce_exit_price') is not None) & (trade_data.get('pe_exit_price') is not None):
+        if (trade_data.get('ce_exit_price') is not None) and (trade_data.get('pe_exit_price') is not None):
             logger.info('All trades completed successfully...!!!')
             break
         # Cancel all orders at 15:10

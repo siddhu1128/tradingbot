@@ -241,8 +241,8 @@ def create_orders(CE_Dict, PE_Dict):
             if verify_order['status'] == kite.STATUS_COMPLETE:
                 order_data['PE_AVG_Price'] = verify_order["average_price"]
                 order_data['PE_Entry_Time'] = str(verify_order["order_timestamp"])
-                logger.info('{} {} order placed successfully'.format(order_data['PE_Trading_Signal'],
-                                                                     kite.TRANSACTION_TYPE_SELL))
+                logger.info('{} {} order placed successfully. Status: {}'.format(order_data['PE_Trading_Signal'],
+                                                                     kite.TRANSACTION_TYPE_SELL, verify_order['status']))
             else:
                 logger.error('Retrying {} {} order Status: {}, Reason: {}'.format(order_data['PE_Trading_Signal'],
                                                                              kite.TRANSACTION_TYPE_SELL,
@@ -818,6 +818,8 @@ def live_data(order_data):
             round(trade_data['PE_Spot_Price'], 2),
             trade_data['pe_exit_price'],
             round(trade_data['PE_PnL'], 2)))
+        if 'max_profit_time' not in trade_data:
+            trade_data['max_profit_time'] = '00:00:00'
         logger.info('Total PnL: {}, Max_profit: {}, Max_profit_time: {}'.format(round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2),
                                                            trade_data['max_profit'], trade_data['max_profit_time']))
         with open(swp_file, "w") as outfile:
@@ -961,7 +963,7 @@ intraday_log = pd.DataFrame(
              'CE_TSL_Hits', 'CE_Exit_Price', 'CE_Exit_Time', 'CE_pnl',
              'PE_Entry_Time', 'PE_Entry_Price', 'PE_Quantity', 'PE_Order_Id', 'PE_Stoploss_Order_Id', 'PE_SL_Hit',
              'PE_TSL_Hits', 'PE_Exit_Price', 'PE_Exit_Time', 'PE_pnl',
-             'Total_pnl', 'Win/Loss', 'max_profit', 'max_profit_time'
+             'Total_pnl', 'Win_Loss', 'max_profit', 'max_profit_time'
              # 'CE_max_profit', 'CE_max_loss', 'PE_max_profit', 'PE_max_loss'
              ])
 
@@ -1035,7 +1037,7 @@ record = [
     (sum([(order_data['CE_AVG_Price'] - trade_data['ce_exit_price']) * QUANTITY,
           (order_data['PE_AVG_Price'] - trade_data['pe_exit_price']) * QUANTITY])) if trade_data.get(
         'ce_exit_price') is not None else None,
-    # "Win/Loss":
+    # "Win_Loss":
     ('win' if sum([(order_data['CE_AVG_Price'] - trade_data['ce_exit_price']) * QUANTITY, (
             order_data['PE_AVG_Price'] - trade_data[
         'pe_exit_price']) * QUANTITY]) > 0 else 'loss') if trade_data.get('ce_exit_price') is not None else None,
@@ -1059,5 +1061,6 @@ if args.icloud:
 else:
     csv_file_path = "{}/{}.csv".format(log_path, str(datetime.date.today()))
 trading_log.to_csv(csv_file_path, index=False)
+trading_log.to_sql('backtest_shortstraddle', con=kiteAPI.engine, if_exists='replace', index=False)
 logger.info(trading_log)
 print(trading_log)

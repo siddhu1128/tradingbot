@@ -267,26 +267,23 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
 
         for index, row in BN_df.iterrows():
             instrument = row["instrument_token"]
-            while True:
-                try:
-                    data = pd.DataFrame(kite.historical_data(instrument, from_date, to_date, timeframe, oi=True))
-                    data["instrument_token"] = row["instrument_token"]
-                    data["exchange_token"] = row["exchange_token"]
-                    data["tradingsymbol"] = row["tradingsymbol"]
-                    data["name"] = row["name"]
-                    data["last_price"] = row["last_price"]
-                    data["expiry"] = row["expiry"]
-                    data["strike"] = row["strike"]
-                    data["tick_size"] = row["tick_size"]
-                    data["lot_size"] = row["lot_size"]
-                    data["instrument_type"] = row["instrument_type"]
-                    data["segment"] = row["segment"]
-                    data["exchange"] = row["exchange"]
-                    BN_OPT_df = pd.concat([BN_OPT_df, data])
-                    break
-                except kiteconnect.exceptions.NetworkException:
-                    print('Sleeping...!!!')
-                    time.sleep(60)
+            try:
+                data = pd.DataFrame(kite.historical_data(instrument, from_date, to_date, timeframe, oi=True))
+                data["instrument_token"] = row["instrument_token"]
+                data["exchange_token"] = row["exchange_token"]
+                data["tradingsymbol"] = row["tradingsymbol"]
+                data["name"] = row["name"]
+                data["last_price"] = row["last_price"]
+                data["expiry"] = row["expiry"]
+                data["strike"] = row["strike"]
+                data["tick_size"] = row["tick_size"]
+                data["lot_size"] = row["lot_size"]
+                data["instrument_type"] = row["instrument_type"]
+                data["segment"] = row["segment"]
+                data["exchange"] = row["exchange"]
+                BN_OPT_df = pd.concat([BN_OPT_df, data])
+            except kiteconnect.exceptions.NetworkException as e:
+                print('error: {}'.format(e))
 
         BN_OPT_df.set_index('date', inplace=True)
         BN_OPT_df = BN_OPT_df.sort_values(by='date')

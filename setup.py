@@ -122,7 +122,7 @@ setup(
     ],
     # Use data_files in code with below code
     # config_file = os.path.join(os.path.dirname(__file__), 'config', 'config.ini')
-    data_files=[('config', ['config/config.ini']), ('', ['kiteAPI.py', 'manage.py', 'short_straddle.py', 'db.sqlite3']), ('templates', template_files)],
+    data_files=[('config', ['config/config.ini']), ('', ['kiteAPI.py', 'manage.py', 'short_straddle.py']), ('templates', template_files)],
     scripts=['kiteAPI.py', 'short_straddle.py'],
     url='https://github.com/siddhu1128/tradingbot',
     license='',

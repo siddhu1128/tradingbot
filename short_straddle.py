@@ -564,6 +564,7 @@ def live_data(order_data):
                         order_type=kite.ORDER_TYPE_MARKET,
                         tag="TradingPot"
                     )
+                    time.sleep(10)
                     CE_verify_order = verifyOrder(CE_Squareoff_Order)
                     try:
                         if CE_verify_order['status'] == 'COMPLETED':
@@ -594,6 +595,7 @@ def live_data(order_data):
                         order_type=kite.ORDER_TYPE_MARKET,
                         tag="TradingPot"
                     )
+                    time.sleep(10)
                     PE_verify_order = verifyOrder(PE_Squareoff_Order)
                     try:
                         if PE_verify_order['status'] == 'COMPLETED':
@@ -639,6 +641,7 @@ def live_data(order_data):
                             order_type=kite.ORDER_TYPE_MARKET,
                             tag="TradingPot"
                         )
+                        time.sleep(10)
                         CE_verify_order = verifyOrder(CE_Squareoff_Order)
                         try:
                             if CE_verify_order['status'] == 'COMPLETED':
@@ -670,6 +673,7 @@ def live_data(order_data):
                             order_type=kite.ORDER_TYPE_MARKET,
                             tag="TradingPot"
                         )
+                        time.sleep(10)
                         PE_verify_order = verifyOrder(PE_Squareoff_Order)
                         try:
                             if PE_verify_order['status'] == 'COMPLETED':

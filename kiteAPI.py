@@ -4,6 +4,7 @@ import time
 
 import mysql.connector
 import requests
+import sqlalchemy
 from pyotp import TOTP
 from kiteconnect import KiteConnect
 import kiteconnect
@@ -15,6 +16,8 @@ import pkg_resources
 import http.client, urllib
 
 from sqlalchemy import create_engine
+from sqlalchemy.exc import PendingRollbackError
+from mysql.connector import errors
 
 # import django
 # django.setup()
@@ -30,7 +33,7 @@ config.read(config_file)
 # DB_File = f"{Path(__file__).resolve().parent}/db.sqlite3"
 # db = sqlite3.connect(DB_File)
 
-engine = create_engine(f'mysql+mysqlconnector://{config.get("default", "DB_USER")}:{config.get("default", "DB_PASSWORD").replace("@", "%40")}@{config.get("default", "DB_HOST")}:{config.get("default", "DB_PORT")}/{config.get("default", "DB_NAME")}')
+engine_url = f'mysql+mysqlconnector://{config.get("default", "DB_USER")}:{config.get("default", "DB_PASSWORD").replace("@", "%40")}@{config.get("default", "DB_HOST")}:{config.get("default", "DB_PORT")}/{config.get("default", "DB_NAME")}'
 
 class KiteApp:
     # Products
@@ -195,7 +198,8 @@ def autologin(method=None, profile='default'):
 
 def getHistoricalData(from_date, to_date, timeframe, profile='default'):
     # eg: 2023-05-23, 2023-05-27, minute, BANKNIFTY, NFO-OPT
-
+    pushover("Historical Data Job started...!!!")
+    engine = create_engine(engine_url)
     # Autologin
     kite = autologin(profile)
     while True:
@@ -218,7 +222,9 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
     vix_token = nse_df[nse_df.tradingsymbol == 'INDIA VIX'].iloc[0].instrument_token
     vix_dict = kite.historical_data(vix_token, from_date, to_date, "minute")
     vix_df = pd.DataFrame(vix_dict)
+    # vix_df.to_sql('backtest_indiavix', con=engine, if_exists='replace', index=False)
     vix_df.to_sql('backtest_indiavix', con=engine, if_exists='replace', index=False)
+
     vix_df.set_index('date', inplace=True)
     print(f"India VIX Historical Data collected succesfullly...!!!")
     vix_df = vix_df.rename(columns={'open': 'vix_open', 'high': 'vix_high', 'low': 'vix_low', 'close': 'vix_close',
@@ -269,6 +275,7 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
             instrument = row["instrument_token"]
             try:
                 data = pd.DataFrame(kite.historical_data(instrument, from_date, to_date, timeframe, oi=True))
+                time.sleep(0.5)
                 data["instrument_token"] = row["instrument_token"]
                 data["exchange_token"] = row["exchange_token"]
                 data["tradingsymbol"] = row["tradingsymbol"]
@@ -288,12 +295,49 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
         BN_OPT_df.set_index('date', inplace=True)
         BN_OPT_df = BN_OPT_df.sort_values(by='date')
         Final_df = pd.concat([BN_OPT_df, vix_df], axis=1).reset_index()
-        Final_df.to_sql(table, con=engine, if_exists='replace', index=False)
+        try:
+            # Create the engine
+
+            engine = create_engine(engine_url)
+
+            # Create a connection
+            connection = engine.connect()
+
+            # Perform your database operations here
+            Final_df.to_sql(table, con=engine, if_exists='replace', index=False)
+
+            # Close the connection
+            connection.close()
+
+        except (PendingRollbackError, errors.OperationalError, errors.InterfaceError) as e:
+            # Handle the lost connection error
+            print("Lost connection to MySQL server during query. Reconnecting and retrying...")
+
+            # Roll back the transaction if applicable
+            try:
+                connection.rollback()
+            except PendingRollbackError:
+                pass
+
+            # Close the connection
+            connection.close()
+
+            # Dispose of the engine
+            engine.dispose()
+
+            # Retry the database operation
+            engine = create_engine(engine_url)
+
+            # Perform the database operation again
+            Final_df.to_sql(table, con=engine, if_exists='replace', index=False)
+        # Final_df.to_sql(table, con=engine, if_exists='replace', index=False)
         print(f"{signal} Options Historical Data collected succesfullly...!!!")
+    pushover("Historical Data collected successfully...!!!")
 
 
 def schedule_historical_data():
     today_date = datetime.date.today()
+    today_date = today_date - datetime.timedelta(days=1)
     start_date = f"{today_date} 09:15:00"
     end_date = f"{today_date} 15:29:00"
     getHistoricalData(start_date, end_date, 'minute', profile='default')

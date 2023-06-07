@@ -24,7 +24,7 @@ parser.add_argument('-p', '--profile', dest='profile', default='default', type=s
 parser.add_argument('--target', dest='target', type=int, help="target in rupees")
 parser.add_argument('-e', '--expiry', dest='expiry_date', type=str, help="Banknifty expiry date")
 parser.add_argument('--config', dest='config', required=False, help="config file full path with filename")
-logfilegroup = parser.add_mutually_exclusive_group(required=True)
+logfilegroup = parser.add_mutually_exclusive_group(required=False)
 logfilegroup.add_argument('--log', dest='logpath',
                           help="Log location do not give any file names eg: /Users/siddhu/Documents/TradingPot")
 logfilegroup.add_argument('--icloud', action="store_true",
@@ -46,6 +46,8 @@ else:
     log_path = str(args.logpath)
     log_file_path = "{}/{}.log".format(log_path, str(datetime.date.today()))
     swp_file = "{}/{}.json".format(log_path, str(datetime.date.today()))
+
+swp_file = "{}/{}.json".format(config.get('default', 'LOG_DIR'), str(datetime.date.today()))
 
 
 logger = logging.getLogger(__name__)
@@ -567,7 +569,7 @@ def live_data(order_data):
                     time.sleep(10)
                     CE_verify_order = verifyOrder(CE_Squareoff_Order)
                     try:
-                        if CE_verify_order['status'] == 'COMPLETED':
+                        if CE_verify_order['status'] == kite.STATUS_COMPLETE or CE_verify_order['status'] == 'PENDING' or CE_verify_order['status'] == 'OPEN PENDING':
                             trade_data['ce_exit_price'] = CE_verify_order["average_price"]
                             trade_data['ce_exit_time'] = str(CE_verify_order["order_timestamp"]).split(' ')[1]
                             logger.info('{} Squared off successfully..!!!'.format(trade_data['CE_Trading_Signal']))
@@ -598,7 +600,7 @@ def live_data(order_data):
                     time.sleep(10)
                     PE_verify_order = verifyOrder(PE_Squareoff_Order)
                     try:
-                        if PE_verify_order['status'] == 'COMPLETED':
+                        if PE_verify_order['status'] == kite.STATUS_COMPLETE or PE_verify_order['status'] == 'PENDING' or PE_verify_order['status'] == 'OPEN PENDING':
                             trade_data['pe_exit_price'] = PE_verify_order["average_price"]
                             trade_data['pe_exit_time'] = str(PE_verify_order["order_timestamp"]).split(' ')[1]
                             logger.info('{} Squared off successfully..!!!'.format(trade_data['PE_Trading_Signal']))

@@ -18,6 +18,8 @@ import http.client, urllib
 from sqlalchemy import create_engine
 from sqlalchemy.exc import PendingRollbackError
 from mysql.connector import errors
+import subprocess
+import sys
 
 # import django
 # django.setup()
@@ -295,49 +297,18 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
         BN_OPT_df.set_index('date', inplace=True)
         BN_OPT_df = BN_OPT_df.sort_values(by='date')
         Final_df = pd.concat([BN_OPT_df, vix_df], axis=1).reset_index()
-        try:
-            # Create the engine
-
-            engine = create_engine(engine_url)
-
-            # Create a connection
-            connection = engine.connect()
-
-            # Perform your database operations here
-            Final_df.to_sql(table, con=engine, if_exists='replace', index=False)
-
-            # Close the connection
-            connection.close()
-
-        except (PendingRollbackError, errors.OperationalError, errors.InterfaceError) as e:
-            # Handle the lost connection error
-            print("Lost connection to MySQL server during query. Reconnecting and retrying...")
-
-            # Roll back the transaction if applicable
-            try:
-                connection.rollback()
-            except PendingRollbackError:
-                pass
-
-            # Close the connection
-            connection.close()
-
-            # Dispose of the engine
-            engine.dispose()
-
-            # Retry the database operation
-            engine = create_engine(engine_url)
-
-            # Perform the database operation again
-            Final_df.to_sql(table, con=engine, if_exists='replace', index=False)
-        # Final_df.to_sql(table, con=engine, if_exists='replace', index=False)
+        engine = create_engine(engine_url, pool_recycle=3600, pool_timeout=30, pool_pre_ping=True)
+        chunk_size = 1000  # Adjust the chunk size as per your requirement
+        for i in range(0, len(Final_df), chunk_size):
+            chunk = Final_df[i:i+chunk_size]
+            chunk.to_sql(table, con=engine, if_exists='append', index=False)
         print(f"{signal} Options Historical Data collected succesfullly...!!!")
     pushover("Historical Data collected successfully...!!!")
 
 
 def schedule_historical_data():
     today_date = datetime.date.today()
-    today_date = today_date - datetime.timedelta(days=1)
+    # today_date = today_date - datetime.timedelta(days=1)
     start_date = f"{today_date} 09:15:00"
     end_date = f"{today_date} 15:29:00"
     getHistoricalData(start_date, end_date, 'minute', profile='default')
@@ -395,6 +366,40 @@ def pushover(message, profile='default'):
                      "message": message,
                  }), {"Content-type": "application/x-www-form-urlencoded"})
     return conn.getresponse()
+
+
+def monitor():
+    kite = autologin()
+    swp_file = "{}/{}.json".format(config.get('default', 'LOG_DIR'), str(datetime.date.today()))
+    CRONJOB_NAME = "short_straddle"
+    process_count = int(subprocess.getoutput("pgrep -c -f '{}'".format(CRONJOB_NAME)))
+
+    if not os.path.isfile(swp_file):
+        # Create orders
+        sys.exit(0)
+    else:
+        with open(swp_file, 'r') as f:
+            order_data = json.load(f)
+
+    def verifyOrder(order_id):
+        orders = kite.orders()
+        for i in range(len(orders)):
+            if orders[i]['order_id'] == str(order_id):
+                return orders[i]
+
+    CE_Order_Id = order_data['CE_Order_Id']
+    PE_Order_Id = order_data['PE_Order_Id']
+    CE_Stoploss_Order_Id = order_data['CE_Stoploss_Order_Id']
+    PE_Stoploss_Order_Id = order_data['PE_Stoploss_Order_Id']
+
+    if verifyOrder(CE_Stoploss_Order_Id) == 'TRIGGER PENDING' or verifyOrder(
+            PE_Stoploss_Order_Id) == 'TRIGGER PENDING' or verifyOrder(
+            CE_Order_Id) != kite.STATUS_COMPLETE or verifyOrder(PE_Order_Id) != kite.STATUS_COMPLETE:
+        if process_count > 0:
+            print("Cron job '{}' is running.".format(CRONJOB_NAME))
+        else:
+            print("Cron job '{}' is not running.".format(CRONJOB_NAME))
+            pushover("[Important] Short_straddle Cronjob is not running please verify")
 
 
 # scheduleHistoricalDump('BANKNIFTY', 'NFO-OPT', 'minute', profile='default')

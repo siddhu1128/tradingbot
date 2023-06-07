@@ -47,7 +47,9 @@ else:
     log_file_path = "{}/{}.log".format(log_path, str(datetime.date.today()))
     swp_file = "{}/{}.json".format(log_path, str(datetime.date.today()))
 
-swp_file = "{}/{}.json".format(config.get('default', 'LOG_DIR'), str(datetime.date.today()))
+log_path = config.get('default', 'LOG_DIR')
+log_file_path = "{}/{}.log".format(log_path, str(datetime.date.today()))
+swp_file = "{}/{}.json".format(log_path, str(datetime.date.today()))
 
 
 logger = logging.getLogger(__name__)

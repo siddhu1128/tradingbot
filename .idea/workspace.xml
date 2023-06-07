@@ -5,7 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8d1597c7-7e3a-4a53-aeb9-54c9d1120327" name="Changes" comment="bug fixes">
-      <change beforePath="$PROJECT_DIR$/kiteAPI.py" beforeDir="false" afterPath="$PROJECT_DIR$/kiteAPI.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/short_straddle.py" beforeDir="false" afterPath="$PROJECT_DIR$/short_straddle.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -376,7 +377,14 @@
       <option name="project" value="LOCAL" />
       <updated>1686128498605</updated>
     </task>
-    <option name="localTasksCounter" value="28" />
+    <task id="LOCAL-00028" summary="bug fixes">
+      <created>1686129371037</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1686129371037</updated>
+    </task>
+    <option name="localTasksCounter" value="29" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -407,16 +415,16 @@
           <line>21</line>
           <option name="timeStamp" value="14" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/short_straddle.py</url>
-          <line>573</line>
-          <option name="timeStamp" value="87" />
-        </line-breakpoint>
         <line-breakpoint enabled="true" suspend="NONE" type="python-line">
           <condition expression="print(data)" language="Python" />
           <url>file://$PROJECT_DIR$/kiteAPI.py</url>
           <line>292</line>
           <option name="timeStamp" value="92" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/short_straddle.py</url>
+          <line>575</line>
+          <option name="timeStamp" value="103" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>

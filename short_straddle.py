@@ -546,7 +546,7 @@ def live_data(order_data):
                 kiteAPI.pushover('Error: {} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
             print('pe_exit_price: {}'.format(trade_data['pe_exit_price']))
         # Break if both orders have exit price
-        if (trade_data.get('ce_exit_price') is not None) and (trade_data.get('pe_exit_price') is not None):
+        if trade_data.get('ce_exit_price') is not None and trade_data.get('pe_exit_price') is not None:
             logger.info('All trades completed successfully...!!!')
             break
         # Cancel all orders at 15:10
@@ -570,9 +570,10 @@ def live_data(order_data):
                     )
                     time.sleep(10)
                     CE_verify_order = verifyOrder(CE_Squareoff_Order)
+                    print("Line 573, CE_verify_order: {}".format(CE_verify_order))
                     try:
                         if CE_verify_order['status'] == kite.STATUS_COMPLETE or CE_verify_order['status'] == 'PENDING' or CE_verify_order['status'] == 'OPEN PENDING':
-                            trade_data['ce_exit_price'] = CE_verify_order["average_price"]
+                            trade_data['ce_exit_price'] = trade_data['CE_Spot_Price']
                             trade_data['ce_exit_time'] = str(CE_verify_order["order_timestamp"]).split(' ')[1]
                             logger.info('{} Squared off successfully..!!!'.format(trade_data['CE_Trading_Signal']))
                         else:
@@ -601,9 +602,10 @@ def live_data(order_data):
                     )
                     time.sleep(10)
                     PE_verify_order = verifyOrder(PE_Squareoff_Order)
+                    print("Line 605, PE_verify_order: {}".format(PE_verify_order))
                     try:
                         if PE_verify_order['status'] == kite.STATUS_COMPLETE or PE_verify_order['status'] == 'PENDING' or PE_verify_order['status'] == 'OPEN PENDING':
-                            trade_data['pe_exit_price'] = PE_verify_order["average_price"]
+                            trade_data['pe_exit_price'] = trade_data['PE_Spot_Price']
                             trade_data['pe_exit_time'] = str(PE_verify_order["order_timestamp"]).split(' ')[1]
                             logger.info('{} Squared off successfully..!!!'.format(trade_data['PE_Trading_Signal']))
                         else:
@@ -616,7 +618,7 @@ def live_data(order_data):
                 else:
                     trade_data['pe_exit_price'] = trade_data['PE_Spot_Price']
                     trade_data['pe_exit_time'] = str(Current_Time).split(' ')[1]
-            break
+
 
         # If Target reached
         trade_data['CE_PnL'] = round(

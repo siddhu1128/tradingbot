@@ -371,7 +371,6 @@ def pushover(message, profile='default'):
 def monitor():
     kite = autologin()
     swp_file = "{}/{}.json".format(config.get('default', 'LOG_DIR'), str(datetime.date.today()))
-    process_count = int(subprocess.run("pgrep -c -f short_straddle", shell=True, capture_output=True, text=True).returncode)
 
     if not os.path.isfile(swp_file):
         # Create orders
@@ -394,11 +393,21 @@ def monitor():
     if verifyOrder(CE_Stoploss_Order_Id) == 'TRIGGER PENDING' or verifyOrder(
             PE_Stoploss_Order_Id) == 'TRIGGER PENDING' or verifyOrder(
             CE_Order_Id) != kite.STATUS_COMPLETE or verifyOrder(PE_Order_Id) != kite.STATUS_COMPLETE:
-        if process_count > 0:
-            print("Cron job short_straddle is running.")
-        else:
-            print("Cron job short_straddle is not running.")
-            pushover("[Important] Short_straddle Cronjob is not running please verify")
+        try:
+            # Use pgrep to check if the cron job is running
+            process = subprocess.Popen(['pgrep', '-f', 'short_straddle'], stdout=subprocess.PIPE)
+            stdout, _ = process.communicate()
+            process.wait()
+
+            # If pgrep returned any output, the cron job is running
+            if stdout:
+                print("Cronjob Running Successfully...!!")
+            else:
+                print("[Important] Cronjob Not Running please verify...!!")
+                pushover("[Important] Cronjob Not Running please verify...!!")
+        except Exception as e:
+            print("Monitoring Error occurred:", e)
+            pushover("Monitoring Error occurred:", e)
 
 
 # scheduleHistoricalDump('BANKNIFTY', 'NFO-OPT', 'minute', profile='default')

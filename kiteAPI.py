@@ -371,8 +371,7 @@ def pushover(message, profile='default'):
 def monitor():
     kite = autologin()
     swp_file = "{}/{}.json".format(config.get('default', 'LOG_DIR'), str(datetime.date.today()))
-    CRONJOB_NAME = "short_straddle"
-    process_count = int(subprocess.getoutput("pgrep -c -f '{}'".format(CRONJOB_NAME)))
+    process_count = int(subprocess.run("pgrep -c -f short_straddle", shell=True, capture_output=True, text=True).returncode)
 
     if not os.path.isfile(swp_file):
         # Create orders
@@ -396,9 +395,9 @@ def monitor():
             PE_Stoploss_Order_Id) == 'TRIGGER PENDING' or verifyOrder(
             CE_Order_Id) != kite.STATUS_COMPLETE or verifyOrder(PE_Order_Id) != kite.STATUS_COMPLETE:
         if process_count > 0:
-            print("Cron job '{}' is running.".format(CRONJOB_NAME))
+            print("Cron job short_straddle is running.")
         else:
-            print("Cron job '{}' is not running.".format(CRONJOB_NAME))
+            print("Cron job short_straddle is not running.")
             pushover("[Important] Short_straddle Cronjob is not running please verify")
 
 

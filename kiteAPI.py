@@ -37,6 +37,7 @@ config.read(config_file)
 
 engine_url = f'mysql+mysqlconnector://{config.get("default", "DB_USER")}:{config.get("default", "DB_PASSWORD").replace("@", "%40")}@{config.get("default", "DB_HOST")}:{config.get("default", "DB_PORT")}/{config.get("default", "DB_NAME")}'
 
+
 class KiteApp:
     # Products
     PRODUCT_MIS = "MIS"
@@ -409,6 +410,44 @@ def monitor():
             print("Monitoring Error occurred:", e)
             pushover("Monitoring Error occurred:", e)
 
+
+def pnlmetrics():
+    kite = autologin()
+    swp_file = "{}/{}.json".format(config.get('default', 'LOG_DIR'), str(datetime.date.today()))
+
+    if not os.path.isfile(swp_file):
+        # Create orders
+        sys.exit(0)
+    else:
+        with open(swp_file, 'r') as f:
+            order_data = json.load(f)
+    engine = create_engine(engine_url)
+    CE_Trading_Signal = order_data['CE_Trading_Signal']
+    PE_Trading_Signal = order_data['PE_Trading_Signal']
+    positions = kite.positions()['net']
+    banknifty_gap_percent = getGapPercent('NIFTY BANK', 'NSE', str(datetime.date.today() - datetime.timedelta(days=5)),
+                                          str(datetime.date.today())).iloc[-1]['gapPercent']
+    banknifty_price = kite.ltp('NSE:NIFTY BANK')['NSE:NIFTY BANK']['last_price']
+    india_vix_price = kite.ltp('NSE:INDIA VIX')['NSE:INDIA VIX']['last_price']
+    for pos in positions:
+        if pos['tradingsymbol'] == CE_Trading_Signal:
+            ce_traded_price = pos['sell_price']
+            ce_pnl = pos['value']
+            ce_quantity = pos['sell_quantity']
+            ce_last_price = pos['last_price']
+        if pos['tradingsymbol'] == PE_Trading_Signal:
+            pe_traded_price = pos['sell_price']
+            pe_pnl = pos['value']
+            pe_quantity = pos['sell_quantity']
+            pe_last_price = pos['last_price']
+
+    record = [{'date': datetime.datetime.now(), 'banknifty_price': banknifty_price,
+               'banknifty_gap_percent': banknifty_gap_percent, 'ce_pnl': ce_pnl, 'pe_pnl': pe_pnl,
+               'total_pnl': sum([ce_pnl, pe_pnl]), 'ce_quantity': ce_quantity, 'ce_price': ce_last_price,
+               'ce_traded_price': ce_traded_price, 'pe_traded_price': pe_traded_price, 'pe_price': pe_last_price,
+               'pe_quantity': pe_quantity, 'india_vix': india_vix_price}]
+    df = pd.DataFrame(record)
+    df.to_sql('backtest_metrics', con=engine, if_exists='append', index=False, method='multi')
 
 # scheduleHistoricalDump('BANKNIFTY', 'NFO-OPT', 'minute', profile='default')
 # getHistoricalData((datetime.date.today() - datetime.timedelta(60)), datetime.date.today(), 'minute', 'BANKNIFTY',

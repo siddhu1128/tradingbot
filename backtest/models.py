@@ -199,3 +199,22 @@ class ShortStraddle(models.Model):
 
     class Meta:
         app_label = 'backtest'
+
+
+class metrics(models.Model):
+    date = models.DateTimeField()
+    banknifty_price = models.FloatField()
+    banknifty_gap_percent = models.FloatField()
+    ce_pnl = models.FloatField()
+    pe_pnl = models.FloatField()
+    total_pnl = models.FloatField()
+    ce_quantity = models.IntegerField()
+    ce_price = models.FloatField()
+    ce_traded_price = models.FloatField()
+    pe_traded_price = models.FloatField()
+    pe_price = models.FloatField()
+    pe_quantity = models.IntegerField()
+    india_vix = models.FloatField()
+
+    class Meta:
+        app_label = 'backtest'

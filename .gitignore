@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Databases
+backtest/migrations/*_initial.py
+
 # C extensions
 *.so
 

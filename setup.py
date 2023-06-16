@@ -135,7 +135,8 @@ setup(
     entry_points={
         'console_scripts': [
             'scheduleBankNiftyHistoricalData = kiteAPI:schedule_historical_data',
-            'tradingbot_monitor = kiteAPI:monitor'
+            'tradingbot_monitor = kiteAPI:monitor',
+            'tradingbot_metrics = kiteAPI:pnlmetrics'
         ]
     },
 )

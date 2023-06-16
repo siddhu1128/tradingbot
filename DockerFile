@@ -1,7 +1,8 @@
-FROM amazonlinux
+FROM ubuntu:latest
 
-RUN yum update -y && yum install -y git python-devel python-setuptools python-pip httpd cronie mariadb105-server gcc mariadb105-devel
-RUN pip3 install mysqlclient
+RUN apt-get update && apt-get install -y python3 python3-build python3-pip gcc mysql-client
+WORKDIR /opt/traingbot
+
 
 ENV DJANGO_SETTINGS_MODULE=tradingbot.settings
 ENV TZ='Asia/Kolkata'

@@ -434,12 +434,12 @@ def pnlmetrics():
     for pos in positions:
         if pos['tradingsymbol'] == CE_Trading_Signal:
             ce_traded_price = pos['sell_price']
-            ce_pnl = pos['pnl']
+            ce_pnl = pos['sell_value']
             ce_quantity = pos['sell_quantity']
             ce_last_price = pos['last_price']
         if pos['tradingsymbol'] == PE_Trading_Signal:
             pe_traded_price = pos['sell_price']
-            pe_pnl = pos['pnl']
+            pe_pnl = pos['sell_value']
             pe_quantity = pos['sell_quantity']
             pe_last_price = pos['last_price']
 

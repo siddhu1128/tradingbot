@@ -20,9 +20,7 @@ from sqlalchemy.exc import PendingRollbackError
 from mysql.connector import errors
 import subprocess
 import sys
-
-# import django
-# django.setup()
+import pytz
 
 os.environ['TZ'] = 'Asia/Kolkata'
 time.tzset()
@@ -226,7 +224,7 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
     vix_dict = kite.historical_data(vix_token, from_date, to_date, "minute")
     vix_df = pd.DataFrame(vix_dict)
     # vix_df.to_sql('backtest_indiavix', con=engine, if_exists='replace', index=False)
-    vix_df.to_sql('backtest_indiavix', con=engine, if_exists='replace', index=False)
+    vix_df.to_sql('backtest_indiavix', con=engine, if_exists='append', index=False, method='multi')
 
     vix_df.set_index('date', inplace=True)
     print(f"India VIX Historical Data collected succesfullly...!!!")
@@ -237,7 +235,7 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
     bn_token = nse_df[nse_df.tradingsymbol == 'NIFTY BANK'].iloc[0].instrument_token
     bn_dict = kite.historical_data(bn_token, from_date, to_date, "minute")
     bn_df = pd.DataFrame(bn_dict)
-    bn_df.to_sql('backtest_bankniftyindex', con=engine, if_exists='replace', index=False)
+    bn_df.to_sql('backtest_bankniftyindex', con=engine, if_exists='append', index=False, method='multi')
     bn_df.set_index('date', inplace=True)
     print(f"Banknifty Index Historical Data collected succesfullly...!!!")
 
@@ -245,7 +243,7 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
     nf_token = nse_df[nse_df.tradingsymbol == 'NIFTY 50'].iloc[0].instrument_token
     nf_dict = kite.historical_data(nf_token, from_date, to_date, "minute")
     nf_df = pd.DataFrame(nf_dict)
-    nf_df.to_sql('backtest_niftyindex', con=engine, if_exists='replace', index=False)
+    nf_df.to_sql('backtest_niftyindex', con=engine, if_exists='append', index=False, method='multi')
     nf_df.set_index('date', inplace=True)
     print(f"Nifty Index Historical Data collected succesfullly...!!!")
 
@@ -253,7 +251,7 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
     fn_token = nse_df[nse_df.tradingsymbol == 'NIFTY FIN SERVICE'].iloc[0].instrument_token
     fn_dict = kite.historical_data(fn_token, from_date, to_date, "minute")
     fn_df = pd.DataFrame(fn_dict)
-    fn_df.to_sql('backtest_finniftyindex', con=engine, if_exists='replace', index=False)
+    fn_df.to_sql('backtest_finniftyindex', con=engine, if_exists='append', index=False, method='multi')
     fn_df.set_index('date', inplace=True)
     print(f"Finnifty Index Historical Data collected succesfullly...!!!")
 
@@ -302,7 +300,7 @@ def getHistoricalData(from_date, to_date, timeframe, profile='default'):
         chunk_size = 1000  # Adjust the chunk size as per your requirement
         for i in range(0, len(Final_df), chunk_size):
             chunk = Final_df[i:i+chunk_size]
-            chunk.to_sql(table, con=engine, if_exists='append', index=False)
+            chunk.to_sql(table, con=engine, if_exists='append', index=False, method='multi')
         print(f"{signal} Options Historical Data collected succesfullly...!!!")
     pushover("Historical Data collected successfully...!!!")
 
@@ -412,6 +410,10 @@ def monitor():
 
 
 def pnlmetrics():
+    exit_time = "15:15"
+    current_time = time.strftime("%H:%M")
+    if current_time >= exit_time:
+        sys.exit(0)
     kite = autologin()
     swp_file = "{}/{}.json".format(config.get('default', 'LOG_DIR'), str(datetime.date.today()))
 

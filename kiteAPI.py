@@ -434,14 +434,24 @@ def pnlmetrics():
     for pos in positions:
         if pos['tradingsymbol'] == CE_Trading_Signal:
             ce_traded_price = pos['sell_price']
-            ce_pnl = pos['sell_value']
             ce_quantity = pos['sell_quantity']
+            ce_buyprice = pos['buy_price']
             ce_last_price = pos['last_price']
         if pos['tradingsymbol'] == PE_Trading_Signal:
             pe_traded_price = pos['sell_price']
-            pe_pnl = pos['sell_value']
+            pe_buyprice = pos['buy_price']
             pe_quantity = pos['sell_quantity']
             pe_last_price = pos['last_price']
+
+    if ce_buyprice == 0:
+        ce_pnl = round((float(ce_traded_price) - float(kite.ltp(f'NFO:{CE_Trading_Signal}')[f'NFO:{CE_Trading_Signal}']['last_price'])) * int(ce_quantity), 2)
+    else:
+        ce_pnl = round((float(ce_traded_price) - float(ce_buyprice)) * int(ce_quantity),2)
+
+    if pe_buyprice == 0:
+        pe_pnl = round((float(pe_traded_price) - float(kite.ltp(f'NFO:{PE_Trading_Signal}')[f'NFO:{PE_Trading_Signal}']['last_price'])) * int(pe_quantity), 2)
+    else:
+        pe_pnl = round((float(pe_traded_price) - float(pe_buyprice)) * int(pe_quantity), 2)
 
     record = [{'date': datetime.datetime.now(), 'banknifty_price': banknifty_price,
                'banknifty_gap_percent': banknifty_gap_percent, 'ce_pnl': ce_pnl, 'pe_pnl': pe_pnl,
@@ -451,6 +461,7 @@ def pnlmetrics():
     df = pd.DataFrame(record)
     df.to_sql('backtest_metrics', con=engine, if_exists='append', index=False, method='multi')
 
+pnlmetrics()
 # scheduleHistoricalDump('BANKNIFTY', 'NFO-OPT', 'minute', profile='default')
 # getHistoricalData((datetime.date.today() - datetime.timedelta(60)), datetime.date.today(), 'minute', 'BANKNIFTY',
 #                   'NFO-OPT', profile='default')

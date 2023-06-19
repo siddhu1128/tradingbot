@@ -461,7 +461,7 @@ def pnlmetrics():
     df = pd.DataFrame(record)
     df.to_sql('backtest_metrics', con=engine, if_exists='append', index=False, method='multi')
 
-pnlmetrics()
+
 # scheduleHistoricalDump('BANKNIFTY', 'NFO-OPT', 'minute', profile='default')
 # getHistoricalData((datetime.date.today() - datetime.timedelta(60)), datetime.date.today(), 'minute', 'BANKNIFTY',
 #                   'NFO-OPT', profile='default')

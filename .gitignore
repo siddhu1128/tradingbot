@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 # Databases
-backtest/migrations/*_initial.py
+backtest/migrations/0001_initial.py
 
 # C extensions
 *.so

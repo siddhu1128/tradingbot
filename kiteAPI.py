@@ -462,6 +462,23 @@ def pnlmetrics():
     df.to_sql('backtest_metrics', con=engine, if_exists='append', index=False, method='multi')
 
 
+def getATR(symbol, interval=15, duration=5):
+    interval = f"{interval}minute"
+    kite = autologin()
+    instrument_df = pd.DataFrame(kite.instruments("NFO"))
+    instrument = instrument_df[instrument_df.tradingsymbol==symbol].instrument_token.values[0]
+    df = pd.DataFrame(kite.historical_data(instrument, datetime.date.today()-datetime.timedelta(duration), datetime.date.today(), interval))
+    n = 20
+    df['H-L']=abs(df['high']-df['low'])
+    df['H-PC']=abs(df['high']-df['close'].shift(1))
+    df['L-PC']=abs(df['low']-df['close'].shift(1))
+    df['TR']=df[['H-L','H-PC','L-PC']].max(axis=1, skipna=False)
+    df['ATR'] = df['TR'].ewm(com=n, min_periods=n).mean()
+    ATR = round(df['ATR'].iloc[-1], 2)
+    return ATR
+
+
+# getATR("BANKNIFTY2362243500CE")
 # scheduleHistoricalDump('BANKNIFTY', 'NFO-OPT', 'minute', profile='default')
 # getHistoricalData((datetime.date.today() - datetime.timedelta(60)), datetime.date.today(), 'minute', 'BANKNIFTY',
 #                   'NFO-OPT', profile='default')

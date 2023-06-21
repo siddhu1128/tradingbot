@@ -12,6 +12,7 @@ import configparser
 import kiteAPI
 import pkg_resources
 import kiteconnect
+from sqlalchemy import create_engine
 
 os.environ['TZ'] = 'Asia/Kolkata'
 time.tzset()
@@ -122,6 +123,7 @@ except Exception as e:
 trading_log = pd.DataFrame()
 trailing_stoploss_log = {}
 ATR_TIME = "12:30"
+engine = create_engine(kiteAPI.engine_url)
 
 
 # funtions
@@ -511,6 +513,8 @@ def live_data(order_data):
 
         if trade_data.get('max_profit') is None:
             trade_data['max_profit'] = 0
+        if trade_data.get('max_loss') is None:
+            trade_data['max_loss'] = 0
         # Verify Orders
         if not args.dev:
             # CE stoploss order
@@ -547,10 +551,7 @@ def live_data(order_data):
                     '{} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
                 kiteAPI.pushover('Error: {} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
             print('pe_exit_price: {}'.format(trade_data['pe_exit_price']))
-        # Break if both orders have exit price
-        if trade_data.get('ce_exit_price') is not None and trade_data.get('pe_exit_price') is not None:
-            logger.info('All trades completed successfully...!!!')
-            break
+
         # Cancel all orders at 15:10
         if datetime.datetime.now() >= datetime.datetime.now().replace(hour=int(EXIT_TIME.split(':')[0]),
                                                                       minute=int(EXIT_TIME.split(':')[1]),
@@ -570,6 +571,7 @@ def live_data(order_data):
                         order_type=kite.ORDER_TYPE_MARKET,
                         tag="TradingPot"
                     )
+                    trade_data['ce_exit_price'] = trade_data['CE_Spot_Price']
                     time.sleep(10)
                     CE_verify_order = verifyOrder(CE_Squareoff_Order)
                     print("Line 573, CE_verify_order: {}".format(CE_verify_order))
@@ -602,6 +604,7 @@ def live_data(order_data):
                         order_type=kite.ORDER_TYPE_MARKET,
                         tag="TradingPot"
                     )
+                    trade_data['pe_exit_price'] = trade_data['PE_Spot_Price']
                     time.sleep(10)
                     PE_verify_order = verifyOrder(PE_Squareoff_Order)
                     print("Line 605, PE_verify_order: {}".format(PE_verify_order))
@@ -875,6 +878,9 @@ def live_data(order_data):
         if trade_data['max_profit'] < round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2):
             trade_data['max_profit'] = round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2)
             trade_data['max_profit_time'] = str(datetime.datetime.now().time()).split('.')[0]
+        if trade_data['max_loss'] > round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2):
+            trade_data['max_loss'] = round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2)
+            trade_data['max_loss_time'] = str(datetime.datetime.now().time()).split('.')[0]
         logger.info("{} ENTRY_TIME: {}, AVG_PRICE: {}, SL: {}, TSL: {}, LTP: {}, Exit_Price: {}, PnL: {}".format(
             trade_data['CE_Trading_Signal'], trade_data['CE_Entry_Time'], round(trade_data['CE_AVG_Price'], 2),
             round(trade_data['CE_Stoploss_Price'], 2), round(trade_data['CE_TRAILING_STOPLOSS_PRICE'], 2),
@@ -889,11 +895,38 @@ def live_data(order_data):
             round(trade_data['PE_PnL'], 2)))
         if 'max_profit_time' not in trade_data:
             trade_data['max_profit_time'] = '00:00:00'
+        if 'max_loss_time' not in trade_data:
+            trade_data['max_loss_time'] = '00:00:00'
         logger.info('Total PnL: {}, Max_profit: {}, Max_profit_time: {}'.format(round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2),
                                                            trade_data['max_profit'], trade_data['max_profit_time']))
         with open(swp_file, "w") as outfile:
             json.dump(trade_data, outfile)
         time.sleep(5)
+
+        # Database
+        record = [{
+            'Date': datetime.datetime.now(), 'Day': datetime.date.today(), 'Signal': SIGNAL, 'ATM': ATM, 'Expiry_Date': EXPIRY_DATE, 'SL_Percent': STOPLOSS, 'TSL_Percent': TRAILING_STOPLOSS,
+            'CE_Entry_Time': trade_data['CE_Entry_Time'], 'CE_Entry_Price': trade_data['CE_AVG_Price'], 'CE_Quantity': QUANTITY, 'CE_Order_Id': trade_data['CE_Order_Id'] if trade_data.get('CE_Order_Id') is not None else None,
+            'CE_Stoploss_Order_Id': trade_data['CE_Stoploss_Order_Id'] if trade_data.get('CE_Stoploss_Order_Id') is not None else None, 'CE_SL_Hit': trade_data['ce_sl_hit_price'],
+            'CE_TSL_Hits': str(trade_data['ce_trailing_dict']), 'CE_Exit_Price': trade_data['ce_exit_price'] if trade_data.get('ce_exit_price') is not None else 0, 'CE_Exit_Time': trade_data['ce_exit_time'] if trade_data.get('ce_exit_price') is not None else None,
+            'CE_pnl': round(trade_data['CE_PnL'], 2),
+            'PE_Entry_Time': trade_data['PE_Entry_Time'], 'PE_Entry_Price': trade_data['PE_AVG_Price'], 'PE_Quantity': QUANTITY, 'PE_Order_Id': trade_data['PE_Order_Id'] if trade_data.get('PE_Order_Id') is not None else None,
+            'PE_Stoploss_Order_Id': trade_data['PE_Stoploss_Order_Id'] if trade_data.get('PE_Stoploss_Order_Id') is not None else None, 'PE_SL_Hit': trade_data['pe_sl_hit_price'],
+            'PE_TSL_Hits': str(trade_data['pe_trailing_dict']), 'PE_Exit_Price': trade_data['pe_exit_price'] if trade_data.get('pe_exit_price') is not None else 0, 'PE_Exit_Time': trade_data['pe_exit_time'] if trade_data.get('pe_exit_price') is not None else None,
+            'PE_pnl': round(trade_data['PE_PnL'], 2),
+            'Total_pnl': round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2),
+            'Win_Loss': ('win' if round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2) > 0 else 'loss'),
+            'max_profit': trade_data['max_profit'], 'max_profit_time':trade_data['max_profit_time'], 'max_loss': trade_data['max_loss'], 'max_loss_time':trade_data['max_loss_time']
+        }]
+        df = pd.DataFrame(record)
+        df.to_sql('backtest_shortstraddle', con=engine, if_exists='append', index=False, method='multi')
+        # End of Database
+
+        # Break if both orders have exit price
+        if trade_data.get('ce_exit_price') is not None and trade_data.get('pe_exit_price') is not None:
+            trade_data['ce_exit_price'] = verifyOrder(trade_data['CE_Stoploss_Order_Id'])['average_price']
+            trade_data['pe_exit_price'] = verifyOrder(trade_data['PE_Stoploss_Order_Id'])['average_price']
+            break
     return trade_data
 
 
@@ -1025,17 +1058,6 @@ Exit_Time = datetime.datetime.strptime('{} {}'.format(str(datetime.date.today())
 Current_datetime = datetime.datetime.now()
 Current_Time = datetime.datetime.strptime(Current_datetime.strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
 
-# Trading Log record
-intraday_log = pd.DataFrame(
-    columns=['Date', 'Day', 'Signal', 'ATM', 'Expiry_Date', 'SL_Percent', 'TSL_Percent',
-             'CE_Entry_Time', 'CE_Entry_Price', 'CE_Quantity', 'CE_Order_Id', 'CE_Stoploss_Order_Id', 'CE_SL_Hit',
-             'CE_TSL_Hits', 'CE_Exit_Price', 'CE_Exit_Time', 'CE_pnl',
-             'PE_Entry_Time', 'PE_Entry_Price', 'PE_Quantity', 'PE_Order_Id', 'PE_Stoploss_Order_Id', 'PE_SL_Hit',
-             'PE_TSL_Hits', 'PE_Exit_Price', 'PE_Exit_Time', 'PE_pnl',
-             'Total_pnl', 'Win_Loss', 'max_profit', 'max_profit_time'
-             # 'CE_max_profit', 'CE_max_loss', 'PE_max_profit', 'PE_max_loss'
-             ])
-
 if not os.path.isfile(swp_file):
     # Create orders
     order_data = create_orders(CE_Dict, PE_Dict)
@@ -1044,92 +1066,3 @@ else:
         order_data = json.load(f)
 
 trade_data = live_data(order_data)
-
-record = [
-    # Date
-    str(datetime.datetime.now()),
-    # Day
-    str(datetime.date.today()),
-    # Signal
-    SIGNAL,
-    # ATM
-    ATM,
-    # Expiry_Date
-    EXPIRY_DATE,
-    # SL_Percent
-    STOPLOSS,
-    # TSL_Percent
-    TRAILING_STOPLOSS,
-    # CE_Entry_time
-    order_data['CE_Entry_Time'],
-    # CE_Entry_Price
-    order_data['CE_AVG_Price'],
-    # CE_Quantity
-    QUANTITY,
-    # CE_Order_Id
-    order_data['CE_Order_Id'] if order_data.get('CE_Order_Id') is not None else None,
-    # CE_Stoploss_Order_Id
-    order_data['CE_Stoploss_Order_Id'] if order_data.get('CE_Stoploss_Order_Id') is not None else None,
-    # "CE_SL_Hit":
-    trade_data['ce_sl_hit_price'],
-    # "CE_TSL_Hits":
-    trade_data['ce_trailing_dict'],
-    # "CE_Exit_Price":
-    trade_data['ce_exit_price'] if trade_data.get('ce_exit_price') is not None else 0,
-    # "CE_Exit_Time":
-    trade_data['ce_exit_time'] if trade_data.get('ce_exit_price') is not None else None,
-    # "CE_pnl":
-    ((order_data['CE_AVG_Price'] - trade_data['ce_exit_price']) * QUANTITY) if trade_data.get(
-        'ce_exit_price') is not None else None,
-    # PE_Entry_time
-    order_data['PE_Entry_Time'],
-    # "PE_Entry_Price":
-    order_data['PE_AVG_Price'],
-    # "PE_Quantity":
-    QUANTITY,
-    # PE_Order_Id
-    order_data['PE_Order_Id'] if order_data.get('PE_Order_Id') is not None else None,
-    # CE_Stoploss_Order_Id
-    order_data['PE_Stoploss_Order_Id'] if order_data.get('PE_Stoploss_Order_Id') is not None else None,
-    # "PE_SL_Hit":
-    trade_data['pe_sl_hit_price'],
-    # "PE_TSL_Hits":
-    trade_data['pe_trailing_dict'],
-    # "PE_Exit_Price":
-    trade_data['pe_exit_price'] if trade_data.get('pe_exit_price') is not None else 0,
-    # "PE_Exit_Time":
-    trade_data['pe_exit_time'] if trade_data.get('pe_exit_price') is not None else None,
-    # "PE_pnl":
-    ((order_data['PE_AVG_Price'] - trade_data['pe_exit_price']) * QUANTITY) if trade_data.get(
-        'pe_exit_price') is not None else None,
-    # "Total_pnl":
-    (sum([(order_data['CE_AVG_Price'] - trade_data['ce_exit_price']) * QUANTITY,
-          (order_data['PE_AVG_Price'] - trade_data['pe_exit_price']) * QUANTITY])) if trade_data.get(
-        'ce_exit_price') is not None else None,
-    # "Win_Loss":
-    ('win' if sum([(order_data['CE_AVG_Price'] - trade_data['ce_exit_price']) * QUANTITY, (
-            order_data['PE_AVG_Price'] - trade_data[
-        'pe_exit_price']) * QUANTITY]) > 0 else 'loss') if trade_data.get('ce_exit_price') is not None else None,
-    # max_profit
-    trade_data['max_profit'],
-    # max_profit_time
-    trade_data['max_profit_time']
-    # 'CE_max_profit'
-    # (CE_AVG_Price - CE_Min_Price) * QUANTITY,
-    # # 'CE_max_loss'
-    # (CE_AVG_Price - CE_Max_Price) * QUANTITY,
-    # # 'PE_max_profit'
-    # (PE_AVG_Price - PE_Min_Price) * QUANTITY,
-    # # 'PE_max_loss'
-    # (PE_AVG_Price - PE_Max_Price) * QUANTITY
-]
-intraday_log.loc[0] = record
-trading_log = pd.concat([trading_log, intraday_log], axis=0)
-if args.icloud:
-    csv_file_path = os.path.join(log_path, "/{}.csv".format(str(datetime.date.today())))
-else:
-    csv_file_path = "{}/{}.csv".format(log_path, str(datetime.date.today()))
-trading_log.to_csv(csv_file_path, index=False)
-trading_log.to_sql('backtest_shortstraddle', con=kiteAPI.engine, if_exists='replace', index=False)
-logger.info(trading_log)
-print(trading_log)

@@ -819,10 +819,10 @@ def live_data(order_data):
                 pe_sl_order = verifyOrder(trade_data['PE_Stoploss_Order_Id'])
                 try:
                     if ce_sl_order['status'] == 'TRIGGER PENDING':
-                        trade_data['CE_Stoploss_Price'] = float(trade_data['CE_Spot_Price']) + float(kiteAPI.getATR(trade_data['CE_Trading_Signal']))
+                        trade_data['CE_Stoploss_Price'] = round(float(trade_data['CE_Spot_Price']) + float(kiteAPI.getATR(trade_data['CE_Trading_Signal'])))
                         CE_Stoploss_Order = kite.modify_order(variety=VARIETY,
                                                               order_id=trade_data['CE_Stoploss_Order_Id'],
-                                                              price=(trade_data['CE_Stoploss_Price'] / TICK_SIZE) * TICK_SIZE,
+                                                              price=(int(trade_data['CE_Stoploss_Price']) / TICK_SIZE) * TICK_SIZE,
                                                               trigger_price=round((int(trade_data['CE_Stoploss_Price']) - (int(trade_data['CE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE)
                         logger.info(
                             'Order_Id:{} Modified stoploss order at price {}'.format(trade_data['CE_Stoploss_Order_Id'],
@@ -839,11 +839,11 @@ def live_data(order_data):
 
                 try:
                     if pe_sl_order['status'] == 'TRIGGER PENDING':
-                        trade_data['PE_Stoploss_Price'] = float(trade_data['PE_Spot_Price']) + float(kiteAPI.getATR(trade_data['PE_Trading_Signal']))
+                        trade_data['PE_Stoploss_Price'] = round(float(trade_data['PE_Spot_Price']) + float(kiteAPI.getATR(trade_data['PE_Trading_Signal'])))
                         PE_Stoploss_Order = kite.modify_order(variety=VARIETY,
                                                               order_id=trade_data['PE_Stoploss_Order_Id'],
                                                               # Trying to change with initial order ids instead of stoploss order ids
-                                                              price=(trade_data['PE_Stoploss_Price'] / TICK_SIZE) * TICK_SIZE,
+                                                              price=(int(trade_data['PE_Stoploss_Price']) / TICK_SIZE) * TICK_SIZE,
                                                               trigger_price=round((int(trade_data['PE_Stoploss_Price']) - (int(trade_data['PE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE)
 
                         logger.info('ATR: {} {} modified/trailed successfully'.format(

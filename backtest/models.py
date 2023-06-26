@@ -198,6 +198,7 @@ class ShortStraddle(models.Model):
     max_profit_time = models.CharField(max_length=250)
     max_loss = models.FloatField()
     max_loass_time = models.CharField(max_length=250)
+    banknifty_price = models.FloatField(null=True)
 
     class Meta:
         app_label = 'backtest'

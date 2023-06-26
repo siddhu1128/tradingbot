@@ -829,7 +829,7 @@ def live_data(order_data):
                                                                                      trade_data['CE_Stoploss_Price']))
                         logger.info('ATR: {} {} modified/trailed successfully'.format(
                             trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
-                        kiteAPI.pushover('ATR: {} {} modified/trailed with price '.format(
+                        kiteAPI.pushover('ATR: {} {} modified/trailed with price {}'.format(
                             trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY, trade_data['CE_Stoploss_Price']))
                 except KeyError as e:
                     logger.error(

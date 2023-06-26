@@ -915,8 +915,8 @@ def live_data(order_data):
             'max_profit': trade_data['max_profit'], 'max_profit_time':trade_data['max_profit_time'], 'max_loss': trade_data['max_loss'], 'max_loss_time':trade_data['max_loss_time'],
             'banknifty_price': kite.ltp('NSE:NIFTY BANK')['NSE:NIFTY BANK']['last_price'],
             'india_vix': kite.ltp('NSE:INDIA VIX')['NSE:INDIA VIX']['last_price'],
-            'CE_Price': trade_data['CE_Trading_Signal'],
-            'PE_Price': trade_data['PE_Trading_Signal']
+            'CE_Price': trade_data['CE_Spot_Price'],
+            'PE_Price': trade_data['PE_Spot_Price']
         }]
         df = pd.DataFrame(record)
         df.to_sql('backtest_shortstraddle', con=engine, if_exists='append', index=False, method='multi')

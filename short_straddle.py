@@ -822,17 +822,15 @@ def live_data(order_data):
                         trade_data['CE_Stoploss_Price'] = float(trade_data['CE_Spot_Price']) + float(kiteAPI.getATR(trade_data['CE_Trading_Signal']))
                         CE_Stoploss_Order = kite.modify_order(variety=VARIETY,
                                                               order_id=trade_data['CE_Stoploss_Order_Id'],
-                                                              price=trade_data['CE_Stoploss_Price'],
-                                                              trigger_price=round((int(
-                                                                  trade_data['CE_Stoploss_Price']) - (int(trade_data[
-                                                                                                              'CE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE)
+                                                              price=(trade_data['CE_Stoploss_Price'] / TICK_SIZE) * TICK_SIZE,
+                                                              trigger_price=round((int(trade_data['CE_Stoploss_Price']) - (int(trade_data['CE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE)
                         logger.info(
                             'Order_Id:{} Modified stoploss order at price {}'.format(trade_data['CE_Stoploss_Order_Id'],
                                                                                      trade_data['CE_Stoploss_Price']))
                         logger.info('ATR: {} {} modified/trailed successfully'.format(
                             trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
-                        kiteAPI.pushover('ATR: {} {} modified/trailed successfully'.format(
-                            trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
+                        kiteAPI.pushover('ATR: {} {} modified/trailed with price '.format(
+                            trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY, trade_data['CE_Stoploss_Price']))
                 except KeyError as e:
                     logger.error(
                         '{} {} order not available'.format(trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
@@ -845,15 +843,13 @@ def live_data(order_data):
                         PE_Stoploss_Order = kite.modify_order(variety=VARIETY,
                                                               order_id=trade_data['PE_Stoploss_Order_Id'],
                                                               # Trying to change with initial order ids instead of stoploss order ids
-                                                              price=trade_data['PE_Stoploss_Price'],
-                                                              trigger_price=round((int(
-                                                                  trade_data['PE_Stoploss_Price']) - (int(trade_data[
-                                                                                                              'PE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE, )
+                                                              price=(trade_data['PE_Stoploss_Price'] / TICK_SIZE) * TICK_SIZE,
+                                                              trigger_price=round((int(trade_data['PE_Stoploss_Price']) - (int(trade_data['PE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE)
 
                         logger.info('ATR: {} {} modified/trailed successfully'.format(
                             trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
-                        kiteAPI.pushover('ATR: {} {} modified/trailed successfully'.format(
-                            trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
+                        kiteAPI.pushover('ATR: {} {} modified/trailed with price {}'.format(
+                            trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY, trade_data['PE_Stoploss_Price']))
                         logger.info(
                             'Order_Id:{} Modified stoploss order at price {}'.format(trade_data['PE_Stoploss_Order_Id'],
                                                                                      trade_data['PE_Stoploss_Price']))

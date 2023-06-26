@@ -200,6 +200,8 @@ class ShortStraddle(models.Model):
     max_loass_time = models.CharField(max_length=250)
     banknifty_price = models.FloatField(null=True)
     india_vix = models.FloatField(null=True)
+    CE_Price = models.FloatField(null=True)
+    PE_Price = models.FloatField(null=True)
 
     class Meta:
         app_label = 'backtest'

@@ -912,11 +912,11 @@ def live_data(order_data):
             'PE_pnl': round(trade_data['PE_PnL'], 2),
             'Total_pnl': round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2),
             'Win_Loss': ('win' if round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2) > 0 else 'loss'),
-            'max_profit': trade_data['max_profit'], 'max_profit_time':trade_data['max_profit_time'], 'max_loss': trade_data['max_loss'], 'max_loss_time':trade_data['max_loss_time'],
-            'banknifty_price': kite.ltp('NSE:NIFTY BANK')['NSE:NIFTY BANK']['last_price'],
-            'india_vix': kite.ltp('NSE:INDIA VIX')['NSE:INDIA VIX']['last_price'],
-            'CE_Price': trade_data['CE_Trading_Signal'],
-            'PE_Price': trade_data['PE_Trading_Signal']
+            'max_profit': trade_data['max_profit'], 'max_profit_time':trade_data['max_profit_time'], 'max_loss': trade_data['max_loss'], 'max_loss_time':trade_data['max_loss_time']
+            # 'banknifty_price': kite.ltp('NSE:NIFTY BANK')['NSE:NIFTY BANK']['last_price'],
+            # 'india_vix': kite.ltp('NSE:INDIA VIX')['NSE:INDIA VIX']['last_price'],
+            # 'CE_Price': trade_data['CE_Trading_Signal'],
+            # 'PE_Price': trade_data['PE_Trading_Signal']
         }]
         df = pd.DataFrame(record)
         df.to_sql('backtest_shortstraddle', con=engine, if_exists='append', index=False, method='multi')

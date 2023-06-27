@@ -635,13 +635,12 @@ def live_data(order_data):
                 'pe_exit_price') is None else ((trade_data['PE_AVG_Price'] - trade_data['pe_exit_price']) * QUANTITY),
             2)
         if args.target:
-            if (int(trade_data['CE_PnL']) + int(trade_data['PE_PnL'])) >= args.target:
+            if (int(trade_data['CE_PnL']) + int(trade_data['PE_PnL'])) >= trade_data['target']:
                 logger.info('Total PnL reached the target...!!!')
                 logger.info('Squaring off all orders and positions...!!!')
-                if trade_data.get('ce_exit_price') is not None:
+                if trade_data.get('ce_exit_price') is None:
                     if not args.dev:
-                        CE_Cancel_Order = kite.cancel_order(variety=VARIETY,
-                                                            order_id=trade_data['CE_Stoploss_Order_Id'])
+                        CE_Cancel_Order = kite.cancel_order(variety=VARIETY, order_id=trade_data['CE_Stoploss_Order_Id'])
                         CE_Squareoff_Order = kite.place_order(
                             variety=VARIETY,
                             exchange=EXCHANGE,
@@ -652,11 +651,13 @@ def live_data(order_data):
                             order_type=kite.ORDER_TYPE_MARKET,
                             tag="TradingPot"
                         )
+                        trade_data['ce_exit_price'] = trade_data['CE_Spot_Price']
                         time.sleep(10)
                         CE_verify_order = verifyOrder(CE_Squareoff_Order)
+                        print("Line 573, CE_verify_order: {}".format(CE_verify_order))
                         try:
-                            if CE_verify_order['status'] == 'COMPLETED':
-                                trade_data['ce_exit_price'] = CE_verify_order["average_price"]
+                            if CE_verify_order['status'] == kite.STATUS_COMPLETE or CE_verify_order['status'] == 'PENDING' or CE_verify_order['status'] == 'OPEN PENDING':
+                                trade_data['ce_exit_price'] = trade_data['CE_Spot_Price']
                                 trade_data['ce_exit_time'] = str(CE_verify_order["order_timestamp"]).split(' ')[1]
                                 logger.info('{} Squared off successfully..!!!'.format(trade_data['CE_Trading_Signal']))
                             else:
@@ -670,10 +671,9 @@ def live_data(order_data):
                         trade_data['ce_exit_price'] = trade_data['CE_Spot_Price']
                         trade_data['ce_exit_time'] = str(Current_Time).split(' ')[1]
 
-                if trade_data.get('pe_exit_price') is not None:
+                if trade_data.get('pe_exit_price') is None:
                     if not args.dev:
-                        PE_Cancel_Order = kite.cancel_order(variety=VARIETY,
-                                                            order_id=trade_data['PE_Stoploss_Order_Id'])
+                        PE_Cancel_Order = kite.cancel_order(variety=VARIETY, order_id=trade_data['PE_Stoploss_Order_Id'])
                         PE_Squareoff_Order = kite.place_order(
                             variety=VARIETY,
                             exchange=EXCHANGE,
@@ -684,11 +684,13 @@ def live_data(order_data):
                             order_type=kite.ORDER_TYPE_MARKET,
                             tag="TradingPot"
                         )
+                        trade_data['pe_exit_price'] = trade_data['PE_Spot_Price']
                         time.sleep(10)
                         PE_verify_order = verifyOrder(PE_Squareoff_Order)
+                        print("Line 605, PE_verify_order: {}".format(PE_verify_order))
                         try:
-                            if PE_verify_order['status'] == 'COMPLETED':
-                                trade_data['pe_exit_price'] = PE_verify_order["average_price"]
+                            if PE_verify_order['status'] == kite.STATUS_COMPLETE or PE_verify_order['status'] == 'PENDING' or PE_verify_order['status'] == 'OPEN PENDING':
+                                trade_data['pe_exit_price'] = trade_data['PE_Spot_Price']
                                 trade_data['pe_exit_time'] = str(PE_verify_order["order_timestamp"]).split(' ')[1]
                                 logger.info('{} Squared off successfully..!!!'.format(trade_data['PE_Trading_Signal']))
                             else:
@@ -701,7 +703,6 @@ def live_data(order_data):
                     else:
                         trade_data['pe_exit_price'] = trade_data['PE_Spot_Price']
                         trade_data['pe_exit_time'] = str(Current_Time).split(' ')[1]
-                break
 
         # Trailing stoploss
         if (trade_data['CE_Spot_Price'] <= trade_data['CE_TRAILING_STOPLOSS_PRICE']) & (
@@ -1058,6 +1059,8 @@ Exit_Time = datetime.datetime.strptime('{} {}'.format(str(datetime.date.today())
 Current_datetime = datetime.datetime.now()
 Current_Time = datetime.datetime.strptime(Current_datetime.strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
 
+margin = kite.margins("equity")
+
 if not os.path.isfile(swp_file):
     # Create orders
     order_data = create_orders(CE_Dict, PE_Dict)
@@ -1065,4 +1068,5 @@ else:
     with open(swp_file, 'r') as f:
         order_data = json.load(f)
 
+order_data['target'] = int(margin['utilised']['debits'] * 0.01)
 trade_data = live_data(order_data)

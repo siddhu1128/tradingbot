@@ -812,56 +812,57 @@ def live_data(order_data):
                                                                                               1])
 
         # ATR Strategy ###########################################
-        curr_time = time.strftime("%H:%M")
-        if curr_time >= trade_data['atr_time']:
-            # code here
-            if not args.dev:
-                ce_sl_order = verifyOrder(trade_data['CE_Stoploss_Order_Id'])
-                pe_sl_order = verifyOrder(trade_data['PE_Stoploss_Order_Id'])
-                try:
-                    if ce_sl_order['status'] == 'TRIGGER PENDING':
-                        trade_data['CE_Stoploss_Price'] = round(float(trade_data['CE_Spot_Price']) + float(kiteAPI.getATR(trade_data['CE_Trading_Signal'])))
-                        CE_Stoploss_Order = kite.modify_order(variety=VARIETY,
-                                                              order_id=trade_data['CE_Stoploss_Order_Id'],
-                                                              price=(int(trade_data['CE_Stoploss_Price']) / TICK_SIZE) * TICK_SIZE,
-                                                              trigger_price=round((int(trade_data['CE_Stoploss_Price']) - (int(trade_data['CE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE)
-                        logger.info(
-                            'Order_Id:{} Modified stoploss order at price {}'.format(trade_data['CE_Stoploss_Order_Id'],
-                                                                                     trade_data['CE_Stoploss_Price']))
-                        logger.info('ATR: {} {} modified/trailed successfully'.format(
-                            trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
-                        kiteAPI.pushover('ATR: {} {} modified/trailed with price {}'.format(
-                            trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY, trade_data['CE_Stoploss_Price']))
-                except KeyError as e:
-                    logger.error(
-                        '{} {} order not available'.format(trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
-                    kiteAPI.pushover('Error: {} {} order not available'.format(trade_data['CE_Trading_Signal'],
-                                                                               kite.TRANSACTION_TYPE_BUY))
+        if not bool(trade_data['ce_trailing_dict']) or not bool(trade_data['pe_trailing_dict']):
+            curr_time = time.strftime("%H:%M")
+            if curr_time >= trade_data['atr_time']:
+                # code here
+                if not args.dev:
+                    ce_sl_order = verifyOrder(trade_data['CE_Stoploss_Order_Id'])
+                    pe_sl_order = verifyOrder(trade_data['PE_Stoploss_Order_Id'])
+                    try:
+                        if ce_sl_order['status'] == 'TRIGGER PENDING':
+                            trade_data['CE_Stoploss_Price'] = round(float(trade_data['CE_Spot_Price']) + float(kiteAPI.getATR(trade_data['CE_Trading_Signal'])))
+                            CE_Stoploss_Order = kite.modify_order(variety=VARIETY,
+                                                                  order_id=trade_data['CE_Stoploss_Order_Id'],
+                                                                  price=(int(trade_data['CE_Stoploss_Price']) / TICK_SIZE) * TICK_SIZE,
+                                                                  trigger_price=round((int(trade_data['CE_Stoploss_Price']) - (int(trade_data['CE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE)
+                            logger.info(
+                                'Order_Id:{} Modified stoploss order at price {}'.format(trade_data['CE_Stoploss_Order_Id'],
+                                                                                         trade_data['CE_Stoploss_Price']))
+                            logger.info('ATR: {} {} modified/trailed successfully'.format(
+                                trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
+                            kiteAPI.pushover('ATR: {} {} modified/trailed with price {}'.format(
+                                trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY, trade_data['CE_Stoploss_Price']))
+                    except KeyError as e:
+                        logger.error(
+                            '{} {} order not available'.format(trade_data['CE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
+                        kiteAPI.pushover('Error: {} {} order not available'.format(trade_data['CE_Trading_Signal'],
+                                                                                   kite.TRANSACTION_TYPE_BUY))
 
-                try:
-                    if pe_sl_order['status'] == 'TRIGGER PENDING':
-                        trade_data['PE_Stoploss_Price'] = round(float(trade_data['PE_Spot_Price']) + float(kiteAPI.getATR(trade_data['PE_Trading_Signal'])))
-                        PE_Stoploss_Order = kite.modify_order(variety=VARIETY,
-                                                              order_id=trade_data['PE_Stoploss_Order_Id'],
-                                                              # Trying to change with initial order ids instead of stoploss order ids
-                                                              price=(int(trade_data['PE_Stoploss_Price']) / TICK_SIZE) * TICK_SIZE,
-                                                              trigger_price=round((int(trade_data['PE_Stoploss_Price']) - (int(trade_data['PE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE)
+                    try:
+                        if pe_sl_order['status'] == 'TRIGGER PENDING':
+                            trade_data['PE_Stoploss_Price'] = round(float(trade_data['PE_Spot_Price']) + float(kiteAPI.getATR(trade_data['PE_Trading_Signal'])))
+                            PE_Stoploss_Order = kite.modify_order(variety=VARIETY,
+                                                                  order_id=trade_data['PE_Stoploss_Order_Id'],
+                                                                  # Trying to change with initial order ids instead of stoploss order ids
+                                                                  price=(int(trade_data['PE_Stoploss_Price']) / TICK_SIZE) * TICK_SIZE,
+                                                                  trigger_price=round((int(trade_data['PE_Stoploss_Price']) - (int(trade_data['PE_Stoploss_Price']) * 0.01)) / TICK_SIZE) * TICK_SIZE)
 
-                        logger.info('ATR: {} {} modified/trailed successfully'.format(
-                            trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
-                        kiteAPI.pushover('ATR: {} {} modified/trailed with price {}'.format(
-                            trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY, trade_data['PE_Stoploss_Price']))
-                        logger.info(
-                            'Order_Id:{} Modified stoploss order at price {}'.format(trade_data['PE_Stoploss_Order_Id'],
-                                                                                     trade_data['PE_Stoploss_Price']))
-                except KeyError as e:
-                    logger.error(
-                        '{} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
-                    kiteAPI.pushover('Error: {} {} order not available'.format(trade_data['PE_Trading_Signal'],
-                                                                               kite.TRANSACTION_TYPE_BUY))
+                            logger.info('ATR: {} {} modified/trailed successfully'.format(
+                                trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
+                            kiteAPI.pushover('ATR: {} {} modified/trailed with price {}'.format(
+                                trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY, trade_data['PE_Stoploss_Price']))
+                            logger.info(
+                                'Order_Id:{} Modified stoploss order at price {}'.format(trade_data['PE_Stoploss_Order_Id'],
+                                                                                         trade_data['PE_Stoploss_Price']))
+                    except KeyError as e:
+                        logger.error(
+                            '{} {} order not available'.format(trade_data['PE_Trading_Signal'], kite.TRANSACTION_TYPE_BUY))
+                        kiteAPI.pushover('Error: {} {} order not available'.format(trade_data['PE_Trading_Signal'],
+                                                                                   kite.TRANSACTION_TYPE_BUY))
 
-            trade_data['atr_time'] = (datetime.datetime.strptime(trade_data['atr_time'], "%H:%M") + datetime.timedelta(
-                minutes=15)).strftime("%H:%M")
+                trade_data['atr_time'] = (datetime.datetime.strptime(trade_data['atr_time'], "%H:%M") + datetime.timedelta(
+                    minutes=15)).strftime("%H:%M")
         # End of ATR Strategy #########################
 
         trade_data['CE_PnL'] = round(
@@ -894,8 +895,8 @@ def live_data(order_data):
             trade_data['max_profit_time'] = '00:00:00'
         if 'max_loss_time' not in trade_data:
             trade_data['max_loss_time'] = '00:00:00'
-        logger.info('Total PnL: {}, Max_profit: {}, Max_profit_time: {}'.format(round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2),
-                                                           trade_data['max_profit'], trade_data['max_profit_time']))
+        logger.info('Total PnL: {}, Max_profit: {}, Max_profit_time: {}, Target: {}'.format(round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2),
+                                                           trade_data['max_profit'], trade_data['max_profit_time'], trade_data['target']))
         with open(swp_file, "w") as outfile:
             json.dump(trade_data, outfile)
         time.sleep(5)

@@ -634,75 +634,74 @@ def live_data(order_data):
             ((trade_data['PE_AVG_Price'] - trade_data['PE_Spot_Price']) * QUANTITY) if trade_data.get(
                 'pe_exit_price') is None else ((trade_data['PE_AVG_Price'] - trade_data['pe_exit_price']) * QUANTITY),
             2)
-        if args.target:
-            if (int(trade_data['CE_PnL']) + int(trade_data['PE_PnL'])) >= trade_data['target']:
-                logger.info('Total PnL reached the target...!!!')
-                logger.info('Squaring off all orders and positions...!!!')
-                if trade_data.get('ce_exit_price') is None:
-                    if not args.dev:
-                        CE_Cancel_Order = kite.cancel_order(variety=VARIETY, order_id=trade_data['CE_Stoploss_Order_Id'])
-                        CE_Squareoff_Order = kite.place_order(
-                            variety=VARIETY,
-                            exchange=EXCHANGE,
-                            tradingsymbol=trade_data['CE_Trading_Signal'],
-                            transaction_type=kite.TRANSACTION_TYPE_BUY,
-                            quantity=QUANTITY,
-                            product=kite.PRODUCT_MIS,
-                            order_type=kite.ORDER_TYPE_MARKET,
-                            tag="TradingPot"
-                        )
-                        trade_data['ce_exit_price'] = trade_data['CE_Spot_Price']
-                        time.sleep(10)
-                        CE_verify_order = verifyOrder(CE_Squareoff_Order)
-                        print("Line 573, CE_verify_order: {}".format(CE_verify_order))
-                        try:
-                            if CE_verify_order['status'] == kite.STATUS_COMPLETE or CE_verify_order['status'] == 'PENDING' or CE_verify_order['status'] == 'OPEN PENDING':
-                                trade_data['ce_exit_price'] = trade_data['CE_Spot_Price']
-                                trade_data['ce_exit_time'] = str(CE_verify_order["order_timestamp"]).split(' ')[1]
-                                logger.info('{} Squared off successfully..!!!'.format(trade_data['CE_Trading_Signal']))
-                            else:
-                                logger.error('[Important] Unable to Square off orders please verify manually...!!!')
-                                kiteAPI.pushover('Error: [Important] Unable to Square off orders please verify manually...!!!')
-                                continue
-                        except KeyError as e:
-                            logger.error("Unable to place square-off orders")
-                            kiteAPI.pushover("Error: Unable to place square-off orders")
-                    else:
-                        trade_data['ce_exit_price'] = trade_data['CE_Spot_Price']
-                        trade_data['ce_exit_time'] = str(Current_Time).split(' ')[1]
+        if round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2) >= trade_data['target']:
+            logger.info('Total PnL reached the target...!!!')
+            logger.info('Squaring off all orders and positions...!!!')
+            if trade_data.get('ce_exit_price') is None:
+                if not args.dev:
+                    CE_Cancel_Order = kite.cancel_order(variety=VARIETY, order_id=trade_data['CE_Stoploss_Order_Id'])
+                    CE_Squareoff_Order = kite.place_order(
+                        variety=VARIETY,
+                        exchange=EXCHANGE,
+                        tradingsymbol=trade_data['CE_Trading_Signal'],
+                        transaction_type=kite.TRANSACTION_TYPE_BUY,
+                        quantity=QUANTITY,
+                        product=kite.PRODUCT_MIS,
+                        order_type=kite.ORDER_TYPE_MARKET,
+                        tag="TradingPot"
+                    )
+                    trade_data['ce_exit_price'] = trade_data['CE_Spot_Price']
+                    time.sleep(10)
+                    CE_verify_order = verifyOrder(CE_Squareoff_Order)
+                    print("Line 573, CE_verify_order: {}".format(CE_verify_order))
+                    try:
+                        if CE_verify_order['status'] == kite.STATUS_COMPLETE or CE_verify_order['status'] == 'PENDING' or CE_verify_order['status'] == 'OPEN PENDING':
+                            trade_data['ce_exit_price'] = trade_data['CE_Spot_Price']
+                            trade_data['ce_exit_time'] = str(CE_verify_order["order_timestamp"]).split(' ')[1]
+                            logger.info('{} Squared off successfully..!!!'.format(trade_data['CE_Trading_Signal']))
+                        else:
+                            logger.error('[Important] Unable to Square off orders please verify manually...!!!')
+                            kiteAPI.pushover('Error: [Important] Unable to Square off orders please verify manually...!!!')
+                            continue
+                    except KeyError as e:
+                        logger.error("Unable to place square-off orders")
+                        kiteAPI.pushover("Error: Unable to place square-off orders")
+                else:
+                    trade_data['ce_exit_price'] = trade_data['CE_Spot_Price']
+                    trade_data['ce_exit_time'] = str(Current_Time).split(' ')[1]
 
-                if trade_data.get('pe_exit_price') is None:
-                    if not args.dev:
-                        PE_Cancel_Order = kite.cancel_order(variety=VARIETY, order_id=trade_data['PE_Stoploss_Order_Id'])
-                        PE_Squareoff_Order = kite.place_order(
-                            variety=VARIETY,
-                            exchange=EXCHANGE,
-                            tradingsymbol=trade_data['PE_Trading_Signal'],
-                            transaction_type=kite.TRANSACTION_TYPE_BUY,
-                            quantity=QUANTITY,
-                            product=kite.PRODUCT_MIS,
-                            order_type=kite.ORDER_TYPE_MARKET,
-                            tag="TradingPot"
-                        )
-                        trade_data['pe_exit_price'] = trade_data['PE_Spot_Price']
-                        time.sleep(10)
-                        PE_verify_order = verifyOrder(PE_Squareoff_Order)
-                        print("Line 605, PE_verify_order: {}".format(PE_verify_order))
-                        try:
-                            if PE_verify_order['status'] == kite.STATUS_COMPLETE or PE_verify_order['status'] == 'PENDING' or PE_verify_order['status'] == 'OPEN PENDING':
-                                trade_data['pe_exit_price'] = trade_data['PE_Spot_Price']
-                                trade_data['pe_exit_time'] = str(PE_verify_order["order_timestamp"]).split(' ')[1]
-                                logger.info('{} Squared off successfully..!!!'.format(trade_data['PE_Trading_Signal']))
-                            else:
-                                logger.error('[Important] Unable to Square off orders please verify manually...!!!')
-                                kiteAPI.pushover('Error: [Important] Unable to Square off orders please verify manually...!!!')
-                                continue
-                        except KeyError as e:
-                            logger.error("Unable to place square-off orders")
-                            kiteAPI.pushover("Error: Unable to place square-off orders")
-                    else:
-                        trade_data['pe_exit_price'] = trade_data['PE_Spot_Price']
-                        trade_data['pe_exit_time'] = str(Current_Time).split(' ')[1]
+            if trade_data.get('pe_exit_price') is None:
+                if not args.dev:
+                    PE_Cancel_Order = kite.cancel_order(variety=VARIETY, order_id=trade_data['PE_Stoploss_Order_Id'])
+                    PE_Squareoff_Order = kite.place_order(
+                        variety=VARIETY,
+                        exchange=EXCHANGE,
+                        tradingsymbol=trade_data['PE_Trading_Signal'],
+                        transaction_type=kite.TRANSACTION_TYPE_BUY,
+                        quantity=QUANTITY,
+                        product=kite.PRODUCT_MIS,
+                        order_type=kite.ORDER_TYPE_MARKET,
+                        tag="TradingPot"
+                    )
+                    trade_data['pe_exit_price'] = trade_data['PE_Spot_Price']
+                    time.sleep(10)
+                    PE_verify_order = verifyOrder(PE_Squareoff_Order)
+                    print("Line 605, PE_verify_order: {}".format(PE_verify_order))
+                    try:
+                        if PE_verify_order['status'] == kite.STATUS_COMPLETE or PE_verify_order['status'] == 'PENDING' or PE_verify_order['status'] == 'OPEN PENDING':
+                            trade_data['pe_exit_price'] = trade_data['PE_Spot_Price']
+                            trade_data['pe_exit_time'] = str(PE_verify_order["order_timestamp"]).split(' ')[1]
+                            logger.info('{} Squared off successfully..!!!'.format(trade_data['PE_Trading_Signal']))
+                        else:
+                            logger.error('[Important] Unable to Square off orders please verify manually...!!!')
+                            kiteAPI.pushover('Error: [Important] Unable to Square off orders please verify manually...!!!')
+                            continue
+                    except KeyError as e:
+                        logger.error("Unable to place square-off orders")
+                        kiteAPI.pushover("Error: Unable to place square-off orders")
+                else:
+                    trade_data['pe_exit_price'] = trade_data['PE_Spot_Price']
+                    trade_data['pe_exit_time'] = str(Current_Time).split(' ')[1]
 
         # Trailing stoploss
         if (trade_data['CE_Spot_Price'] <= trade_data['CE_TRAILING_STOPLOSS_PRICE']) & (

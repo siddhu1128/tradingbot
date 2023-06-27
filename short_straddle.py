@@ -862,7 +862,7 @@ def live_data(order_data):
                                                                                    kite.TRANSACTION_TYPE_BUY))
 
                 trade_data['atr_time'] = (datetime.datetime.strptime(trade_data['atr_time'], "%H:%M") + datetime.timedelta(
-                    minutes=15)).strftime("%H:%M")
+                    minutes=30)).strftime("%H:%M")
         # End of ATR Strategy #########################
 
         trade_data['CE_PnL'] = round(

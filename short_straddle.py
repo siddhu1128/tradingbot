@@ -1059,7 +1059,7 @@ Exit_Time = datetime.datetime.strptime('{} {}'.format(str(datetime.date.today())
 Current_datetime = datetime.datetime.now()
 Current_Time = datetime.datetime.strptime(Current_datetime.strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
 
-margin = kite.margins("equity")
+# margin = kite.margins("equity")
 
 if not os.path.isfile(swp_file):
     # Create orders
@@ -1068,5 +1068,6 @@ else:
     with open(swp_file, 'r') as f:
         order_data = json.load(f)
 
-order_data['target'] = int(margin['utilised']['debits'] * 0.01)
+# order_data['target'] = int(margin['utilised']['debits'] * 0.01)
+order_data['target'] = ((int(QUANTITY/25) * 165000) * 0.01)
 trade_data = live_data(order_data)

@@ -634,8 +634,8 @@ def live_data(order_data):
             ((trade_data['PE_AVG_Price'] - trade_data['PE_Spot_Price']) * QUANTITY) if trade_data.get(
                 'pe_exit_price') is None else ((trade_data['PE_AVG_Price'] - trade_data['pe_exit_price']) * QUANTITY),
             2)
-        if round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2) >= trade_data['target']:
-            logger.info('Total PnL reached the target...!!!')
+        if round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2) >= trade_data['target'] or round(sum([trade_data['CE_PnL'], trade_data['PE_PnL']]), 2) <= (trade_data['target'] * -1):
+            logger.info('Total PnL reached the target/Loss...!!!')
             logger.info('Squaring off all orders and positions...!!!')
             if trade_data.get('ce_exit_price') is None:
                 if not args.dev:
